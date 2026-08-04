@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+### Fixed
+
+- Removed the container-level Ingress IP restriction that rejected Home Assistant's proxy with `403 Forbidden`.
+- Retained Home Assistant Ingress as the authentication and access-control boundary.
+
 ## 0.1.0-dev
 
 ### Added
