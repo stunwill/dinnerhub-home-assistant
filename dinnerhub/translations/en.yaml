@@ -1,0 +1,28 @@
+configuration:
+  planning:
+    name: Meal planning
+    description: Configure the default DinnerHub planning window and repeat warnings.
+    fields:
+      default_days:
+        name: Default planning days
+        description: Open the meal planner with seven or fourteen days.
+      repeat_warning_days:
+        name: Repeat warning period
+        description: Warn when a meal has been used within this many days.
+  household:
+    name: Household
+    description: Default household settings.
+    fields:
+      default_servings:
+        name: Default servings
+        description: Default serving quantity for new recipes and plans.
+  features:
+    name: Preview features
+    description: Enable incomplete features only for development and testing.
+    fields:
+      shopping_list:
+        name: Shopping list
+        description: Enable the work-in-progress shopping list interface.
+      meal_suggestions:
+        name: Meal suggestions
+        description: Enable the work-in-progress suggestion engine.
