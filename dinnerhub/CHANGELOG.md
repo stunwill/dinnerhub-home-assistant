@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0
+
+### Added
+
+- Added full recipe detail views from the meal library.
+- Added editing for existing recipes.
+- Added ingredient quantity and unit entry.
+- Added step-by-step cooking instructions.
+- Added cuisine, difficulty, notes and source URL fields.
+- Added serving controls that scale displayed ingredient quantities.
+- Added favourite and archive actions.
+
+### Improved
+
+- Shopping-list quantities now scale using the servings assigned to each planned meal.
+- Meal cards now provide separate recipe and meal-planning actions.
+- Recipe forms now support adding and removing structured ingredient rows.
+
 ## 0.1.3
 
 ### Added
