@@ -1,7 +1,50 @@
 from __future__ import annotations
 
+from sqlalchemy import func, select
+
+from . import main
 from .main import app
+from .models import Ingredient, RecipeIngredient
 from .shopping import router as shopping_router
+
+
+def replace_ingredients_safely(db, meal, items) -> None:  # type: ignore[no-untyped-def]
+    """Replace recipe ingredients without colliding with existing link rows.
+
+    SQLAlchemy can otherwise insert replacement rows before deleting the old
+    rows, which violates the recipe ingredient uniqueness constraint and was
+    incorrectly reported to the user as a duplicate meal name.
+    """
+    meal.ingredients.clear()
+    db.flush()
+
+    for position, item in enumerate(items):
+        normalised = " ".join(item.name.lower().split())
+        ingredient = db.scalar(select(Ingredient).where(func.lower(Ingredient.name) == normalised))
+        if not ingredient:
+            ingredient = Ingredient(
+                name=normalised.title(),
+                shopping_category=item.shopping_category or "Other",
+                default_unit=item.unit,
+            )
+            db.add(ingredient)
+            db.flush()
+        meal.ingredients.append(
+            RecipeIngredient(
+                ingredient=ingredient,
+                quantity=item.quantity,
+                unit=item.unit,
+                notes=item.notes,
+                optional=item.optional,
+                sort_order=position,
+            )
+        )
+
+
+# The create and update endpoints resolve this helper from the main module at
+# request time, so replacing it here fixes both paths without duplicating the
+# API routes.
+main.replace_ingredients = replace_ingredients_safely
 
 # The original application ends with a catch-all SPA route. Register the
 # shopping API, then move its routes ahead of that fallback so GET requests
