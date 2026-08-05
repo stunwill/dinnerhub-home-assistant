@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 type Ingredient = {
   id?: number;
@@ -21,6 +21,7 @@ type Meal = {
   ingredients: Ingredient[];
   active: boolean;
   favourite: boolean;
+  image_url: string | null;
 };
 
 type PlanEntry = {
@@ -66,6 +67,44 @@ const isoDate = (offset: number) => {
   return value.toISOString().slice(0, 10);
 };
 
+const splitCategories = (value: string | null) =>
+  (value || '').split(',').map((item) => item.trim()).filter(Boolean);
+
+const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
+
+const resizeImage = (file: File): Promise<string> => new Promise((resolve, reject) => {
+  if (!file.type.startsWith('image/')) {
+    reject(new Error('Please select an image file'));
+    return;
+  }
+  if (file.size > 12 * 1024 * 1024) {
+    reject(new Error('Image must be smaller than 12 MB'));
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = () => reject(new Error('Image could not be read'));
+  reader.onload = () => {
+    const image = new Image();
+    image.onerror = () => reject(new Error('Image could not be opened'));
+    image.onload = () => {
+      const max = 1200;
+      const scale = Math.min(1, max / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) {
+        reject(new Error('Image processing is unavailable'));
+        return;
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    image.src = String(reader.result);
+  };
+  reader.readAsDataURL(file);
+});
+
 function App() {
   const [view, setView] = useState<View>('dashboard');
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
@@ -79,6 +118,12 @@ function App() {
   const [planningMeal, setPlanningMeal] = useState<Meal | null>(null);
   const [planningDays, setPlanningDays] = useState(14);
   const [savingDate, setSavingDate] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoryInput, setCategoryInput] = useState('');
+  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
+  const [ingredientInput, setIngredientInput] = useState('');
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [processingImage, setProcessingImage] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
@@ -99,12 +144,35 @@ function App() {
 
   useEffect(() => { void load(); }, [load]);
 
+  const ingredientOptions = useMemo(() => Array.from(new Set(
+    meals.flatMap((meal) => meal.ingredients.map((item) => item.name))
+  )).sort((a, b) => a.localeCompare(b)), [meals]);
+
+  const categoryOptions = useMemo(() => Array.from(new Set(
+    meals.flatMap((meal) => splitCategories(meal.category))
+  )).sort((a, b) => a.localeCompare(b)), [meals]);
+
+  const ingredientSuggestions = useMemo(() => {
+    const term = ingredientInput.toLowerCase().trim();
+    return ingredientOptions
+      .filter((item) => !selectedIngredients.some((selected) => selected.toLowerCase() === item.toLowerCase()))
+      .filter((item) => !term || item.toLowerCase().includes(term))
+      .slice(0, 8);
+  }, [ingredientInput, ingredientOptions, selectedIngredients]);
+
+  const categorySuggestions = useMemo(() => {
+    const term = categoryInput.toLowerCase().trim();
+    return categoryOptions
+      .filter((item) => !selectedCategories.some((selected) => selected.toLowerCase() === item.toLowerCase()))
+      .filter((item) => !term || item.toLowerCase().includes(term))
+      .slice(0, 8);
+  }, [categoryInput, categoryOptions, selectedCategories]);
+
   const filteredMeals = useMemo(() => {
     const term = search.toLowerCase().trim();
     if (!term) return meals;
     return meals.filter((meal) => [
       meal.name,
-      meal.main_protein,
       meal.category,
       ...meal.ingredients.map((item) => item.name)
     ].some((value) => value?.toLowerCase().includes(term)));
@@ -112,26 +180,78 @@ function App() {
 
   const planByDate = useMemo(() => new Map(plan.map((entry) => [entry.meal_date, entry])), [plan]);
 
+  const addIngredient = (raw: string) => {
+    const value = normalize(raw);
+    if (!value) return;
+    if (!selectedIngredients.some((item) => item.toLowerCase() === value.toLowerCase())) {
+      setSelectedIngredients((current) => [...current, value]);
+    }
+    setIngredientInput('');
+  };
+
+  const addCategory = (raw: string) => {
+    const value = normalize(raw);
+    if (!value) return;
+    if (!selectedCategories.some((item) => item.toLowerCase() === value.toLowerCase())) {
+      setSelectedCategories((current) => [...current, value]);
+    }
+    setCategoryInput('');
+  };
+
+  const handleTokenKey = (
+    event: KeyboardEvent<HTMLInputElement>,
+    value: string,
+    add: (entry: string) => void
+  ) => {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      add(value);
+    }
+  };
+
+  const handleImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setProcessingImage(true);
+    try {
+      setImageData(await resizeImage(file));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Image could not be processed');
+    } finally {
+      setProcessingImage(false);
+    }
+  };
+
+  const resetMealForm = () => {
+    setShowMealForm(false);
+    setSelectedCategories([]);
+    setSelectedIngredients([]);
+    setCategoryInput('');
+    setIngredientInput('');
+    setImageData(null);
+  };
+
   const saveMeal = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!selectedIngredients.length) {
+      setError('Add at least one ingredient');
+      return;
+    }
     const form = new FormData(event.currentTarget);
-    const ingredientNames = String(form.get('ingredients') || '')
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
     try {
       await api<Meal>('meals', {
         method: 'POST',
         body: JSON.stringify({
           name: form.get('name'),
           description: form.get('description') || null,
-          main_protein: form.get('protein') || null,
-          category: form.get('category') || null,
+          main_protein: null,
+          category: selectedCategories.join(', ') || null,
           prep_minutes: Number(form.get('prep') || 0),
           cook_minutes: Number(form.get('cook') || 0),
           servings: Number(form.get('servings') || 4),
           difficulty: 'easy',
-          ingredients: ingredientNames.map((name) => ({
+          image_url: imageData,
+          ingredients: selectedIngredients.map((name) => ({
             name,
             quantity: null,
             unit: null,
@@ -140,7 +260,7 @@ function App() {
           instructions: []
         })
       });
-      setShowMealForm(false);
+      resetMealForm();
       setMessage('Recipe added');
       await load();
     } catch (caught) {
@@ -167,6 +287,53 @@ function App() {
     } finally {
       setSavingDate(null);
     }
+  };
+
+  const exportShoppingList = () => {
+    const selectedPlan = Array.from({ length: days }, (_, offset) => planByDate.get(isoDate(offset)))
+      .filter((entry): entry is PlanEntry => Boolean(entry?.meal));
+    const rows = new Map<string, { name: string; quantity: number; hasQuantity: boolean; unit: string; meals: Set<string> }>();
+    selectedPlan.forEach((entry) => {
+      entry.meal?.ingredients.forEach((ingredient) => {
+        const key = `${ingredient.name.toLowerCase()}|${ingredient.unit || ''}`;
+        const current = rows.get(key) || {
+          name: ingredient.name,
+          quantity: 0,
+          hasQuantity: false,
+          unit: ingredient.unit || '',
+          meals: new Set<string>()
+        };
+        if (ingredient.quantity !== null) {
+          current.quantity += ingredient.quantity;
+          current.hasQuantity = true;
+        }
+        current.meals.add(entry.title);
+        rows.set(key, current);
+      });
+    });
+    if (!rows.size) {
+      setError(`No recipe ingredients are available in the next ${days} days`);
+      return;
+    }
+    const csv = [
+      ['Ingredient', 'Quantity', 'Unit', 'Meals'],
+      ...Array.from(rows.values())
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((value) => [
+          value.name,
+          value.hasQuantity ? String(Number(value.quantity.toFixed(2))) : '',
+          value.unit,
+          Array.from(value.meals).join('; ')
+        ])
+    ].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dinnerhub-shopping-list-${isoDate(0)}-${days}-days.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setMessage('Shopping list exported');
   };
 
   return (
@@ -198,7 +365,7 @@ function App() {
                 <span>Tonight</span>
                 <h2>{dashboard?.today?.title || 'Nothing planned yet'}</h2>
                 <p>{dashboard?.today?.meal
-                  ? `${dashboard.today.meal.total_minutes} minutes · ${dashboard.today.meal.main_protein || 'Flexible'}`
+                  ? `${dashboard.today.meal.total_minutes} minutes · ${dashboard.today.meal.category || 'Dinner'}`
                   : 'Open the meal plan to choose dinner.'}</p>
               </article>
               <article className="feature-card">
@@ -224,11 +391,6 @@ function App() {
                 );
               })}
             </div>
-            <section className="stats-grid">
-              <article><strong>{dashboard?.active_meals ?? 0}</strong><span>Active recipes</span></article>
-              <article><strong>{days - (dashboard?.unplanned_days ?? days)}</strong><span>Days planned</span></article>
-              <article><strong>{dashboard?.version || '0.1.1'}</strong><span>Installed version</span></article>
-            </section>
           </>
         )}
 
@@ -237,18 +399,16 @@ function App() {
             <section className="section-heading">
               <div><span className="eyebrow">Recipe library</span><h2>Meal database</h2></div>
             </section>
-            <input
-              className="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search meals, proteins or ingredients"
-            />
+            <input className="search" value={search} onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search meals, categories or ingredients" />
             <div className="meal-grid">
               {filteredMeals.map((meal) => (
                 <article className="meal-card" key={meal.id}>
-                  <div className="meal-placeholder">{meal.name.slice(0, 1).toUpperCase()}</div>
+                  {meal.image_url
+                    ? <img className="meal-image" src={meal.image_url} alt="" />
+                    : <div className="meal-placeholder">{meal.name.slice(0, 1).toUpperCase()}</div>}
                   <div className="meal-card-body">
-                    <span>{meal.category || 'Dinner'} · {meal.main_protein || 'Flexible'}</span>
+                    <span>{meal.category || 'Dinner'}</span>
                     <h3>{meal.name}</h3>
                     <p>{meal.description || 'No description added yet.'}</p>
                     <div className="meal-meta">
@@ -256,19 +416,12 @@ function App() {
                       <span>{meal.cook_minutes}m cook</span>
                       <span>{meal.servings} serves</span>
                     </div>
-                    <button
-                      type="button"
-                      className="plan-meal-button"
-                      onClick={() => setPlanningMeal(meal)}
-                    >
+                    <button type="button" className="plan-meal-button" onClick={() => setPlanningMeal(meal)}>
                       Add to meal plan
                     </button>
                   </div>
                 </article>
               ))}
-              {!filteredMeals.length && (
-                <div className="empty-state"><h3>No recipes found</h3><p>Add the first DinnerHub recipe or clear the search.</p></div>
-              )}
             </div>
           </>
         )}
@@ -277,9 +430,12 @@ function App() {
           <>
             <section className="section-heading">
               <div><span className="eyebrow">Fast planning</span><h2>Upcoming meal plan</h2></div>
-              <div className="segmented">
-                <button className={days === 7 ? 'active' : ''} onClick={() => setDays(7)}>7 days</button>
-                <button className={days === 14 ? 'active' : ''} onClick={() => setDays(14)}>14 days</button>
+              <div className="heading-actions">
+                <div className="segmented">
+                  <button className={days === 7 ? 'active' : ''} onClick={() => setDays(7)}>7 days</button>
+                  <button className={days === 14 ? 'active' : ''} onClick={() => setDays(14)}>14 days</button>
+                </div>
+                <button className="secondary" type="button" onClick={exportShoppingList}>Export shopping list</button>
               </div>
             </section>
             <div className="planner">
@@ -288,12 +444,9 @@ function App() {
                 const entry = planByDate.get(dateValue);
                 return (
                   <article className={offset === 0 ? 'plan-row today' : 'plan-row'} key={dateValue}>
-                    <div>
-                      <span>{offset === 0 ? 'Today' : formatDate(dateValue).split(',')[0]}</span>
-                      <strong>{formatDate(dateValue)}</strong>
-                    </div>
-                    <select
-                      value={entry?.meal_id || (entry?.entry_type !== 'meal' ? entry?.entry_type : '') || ''}
+                    <div><span>{offset === 0 ? 'Today' : formatDate(dateValue).split(',')[0]}</span>
+                      <strong>{formatDate(dateValue)}</strong></div>
+                    <select value={entry?.meal_id || (entry?.entry_type !== 'meal' ? entry?.entry_type : '') || ''}
                       onChange={(event) => {
                         const value = event.target.value;
                         if (['takeaway', 'leftovers', 'eating_out', 'no_meal'].includes(value)) {
@@ -301,8 +454,7 @@ function App() {
                         } else {
                           void assignMeal(dateValue, value ? Number(value) : null);
                         }
-                      }}
-                    >
+                      }}>
                       <option value="">Choose a meal</option>
                       <optgroup label="Special nights">
                         <option value="takeaway">Takeaway</option>
@@ -325,104 +477,126 @@ function App() {
 
       {planningMeal && (
         <div className="modal-backdrop" onMouseDown={() => setPlanningMeal(null)}>
-          <section
-            className="modal plan-picker-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="plan-picker-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+          <section className="modal plan-picker-modal" onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-heading">
-              <div>
-                <span className="eyebrow">Add recipe to plan</span>
-                <h2 id="plan-picker-title">{planningMeal.name}</h2>
-                <p className="modal-intro">Choose an upcoming day. Existing meals can be replaced directly.</p>
-              </div>
+              <div><span className="eyebrow">Add recipe to plan</span><h2>{planningMeal.name}</h2></div>
               <button type="button" className="icon-button" onClick={() => setPlanningMeal(null)}>×</button>
             </div>
-
             <div className="plan-picker-toolbar">
               <span>Upcoming days</span>
               <div className="segmented">
-                <button
-                  type="button"
-                  className={planningDays === 7 ? 'active' : ''}
-                  onClick={() => setPlanningDays(7)}
-                >
-                  7 days
-                </button>
-                <button
-                  type="button"
-                  className={planningDays === 14 ? 'active' : ''}
-                  onClick={() => setPlanningDays(14)}
-                >
-                  14 days
-                </button>
+                <button type="button" className={planningDays === 7 ? 'active' : ''} onClick={() => setPlanningDays(7)}>7 days</button>
+                <button type="button" className={planningDays === 14 ? 'active' : ''} onClick={() => setPlanningDays(14)}>14 days</button>
               </div>
             </div>
-
             <div className="plan-picker-list">
               {Array.from({ length: planningDays }, (_, offset) => {
                 const dateValue = isoDate(offset);
                 const entry = planByDate.get(dateValue);
-                const alreadySelected = entry?.meal_id === planningMeal.id;
-                const buttonLabel = alreadySelected ? 'Selected' : entry ? 'Change' : 'Add';
+                const selected = entry?.meal_id === planningMeal.id;
                 return (
                   <article className={offset === 0 ? 'plan-picker-row today' : 'plan-picker-row'} key={dateValue}>
-                    <div className="plan-picker-date">
-                      <span>{offset === 0 ? 'Today' : formatDate(dateValue).split(',')[0]}</span>
-                      <strong>{formatDate(dateValue)}</strong>
-                    </div>
-                    <div className="plan-picker-current">
-                      <span>Current meal</span>
-                      <strong>{entry?.title || 'Nothing planned'}</strong>
-                    </div>
-                    <button
-                      type="button"
-                      className={alreadySelected ? 'secondary selected' : entry ? 'secondary' : 'primary'}
-                      disabled={alreadySelected || savingDate === dateValue}
-                      onClick={() => void assignMeal(dateValue, planningMeal.id)}
-                    >
-                      {savingDate === dateValue ? 'Saving...' : buttonLabel}
+                    <div><span>{offset === 0 ? 'Today' : formatDate(dateValue).split(',')[0]}</span><strong>{formatDate(dateValue)}</strong></div>
+                    <div><span>Current meal</span><strong>{entry?.title || 'Nothing planned'}</strong></div>
+                    <button type="button" className={selected ? 'secondary selected' : entry ? 'secondary' : 'primary'}
+                      disabled={selected || savingDate === dateValue}
+                      onClick={() => void assignMeal(dateValue, planningMeal.id)}>
+                      {savingDate === dateValue ? 'Saving...' : selected ? 'Selected' : entry ? 'Change' : 'Add'}
                     </button>
                   </article>
                 );
               })}
-            </div>
-
-            <div className="modal-actions">
-              <button type="button" className="secondary" onClick={() => setPlanningMeal(null)}>Close</button>
             </div>
           </section>
         </div>
       )}
 
       {showMealForm && (
-        <div className="modal-backdrop" onMouseDown={() => setShowMealForm(false)}>
+        <div className="modal-backdrop" onMouseDown={resetMealForm}>
           <form className="modal" onSubmit={saveMeal} onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-heading">
               <div><span className="eyebrow">Recipe library</span><h2>Add a meal</h2></div>
-              <button type="button" className="icon-button" onClick={() => setShowMealForm(false)}>×</button>
+              <button type="button" className="icon-button" onClick={resetMealForm}>×</button>
             </div>
             <label>Meal name<input name="name" required maxLength={180} /></label>
             <label>Description<textarea name="description" rows={3} /></label>
-            <div className="form-grid">
-              <label>Main protein<input name="protein" placeholder="Chicken" /></label>
-              <label>Category<input name="category" placeholder="Curry" /></label>
+
+            <label>Categories</label>
+            <div className="token-field">
+              <div className="token-list">
+                {selectedCategories.map((item) => (
+                  <button type="button" className="token" key={item}
+                    onClick={() => setSelectedCategories((current) => current.filter((entry) => entry !== item))}>
+                    {item}<span>×</span>
+                  </button>
+                ))}
+                <input value={categoryInput} onChange={(event) => setCategoryInput(event.target.value)}
+                  onKeyDown={(event) => handleTokenKey(event, categoryInput, addCategory)}
+                  placeholder={selectedCategories.length ? 'Add another category' : 'Type or select categories'} />
+              </div>
+              {(categorySuggestions.length > 0 || categoryInput.trim()) && (
+                <div className="suggestions">
+                  {categorySuggestions.map((item) => (
+                    <button type="button" key={item} onClick={() => addCategory(item)}>{item}</button>
+                  ))}
+                  {categoryInput.trim() && !categoryOptions.some((item) => item.toLowerCase() === categoryInput.trim().toLowerCase()) && (
+                    <button type="button" className="add-new" onClick={() => addCategory(categoryInput)}>
+                      Add “{normalize(categoryInput)}” as a new category
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
+
             <div className="form-grid three">
               <label>Prep minutes<input name="prep" type="number" min="0" defaultValue="15" /></label>
               <label>Cook minutes<input name="cook" type="number" min="0" defaultValue="30" /></label>
               <label>Servings<input name="servings" type="number" min="1" defaultValue="4" /></label>
             </div>
-            <label>
-              Ingredients
-              <input name="ingredients" placeholder="Chicken, rice, coconut milk" />
-              <small>Separate ingredients with commas. Quantities can be added in the detailed editor planned for v0.2.0.</small>
+
+            <label>Ingredients</label>
+            <div className="token-field">
+              <div className="token-list">
+                {selectedIngredients.map((item) => (
+                  <button type="button" className="token" key={item}
+                    onClick={() => setSelectedIngredients((current) => current.filter((entry) => entry !== item))}>
+                    {item}<span>×</span>
+                  </button>
+                ))}
+                <input value={ingredientInput} onChange={(event) => setIngredientInput(event.target.value)}
+                  onKeyDown={(event) => handleTokenKey(event, ingredientInput, addIngredient)}
+                  placeholder={selectedIngredients.length ? 'Add another ingredient' : 'Type an ingredient and press Enter'} />
+              </div>
+              {(ingredientSuggestions.length > 0 || ingredientInput.trim()) && (
+                <div className="suggestions">
+                  {ingredientSuggestions.map((item) => (
+                    <button type="button" key={item} onClick={() => addIngredient(item)}>{item}</button>
+                  ))}
+                  {ingredientInput.trim() && !ingredientOptions.some((item) => item.toLowerCase() === ingredientInput.trim().toLowerCase()) && (
+                    <button type="button" className="add-new" onClick={() => addIngredient(ingredientInput)}>
+                      Add “{normalize(ingredientInput)}” as a new ingredient
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <small className="field-help">Choose existing ingredients or type a new one and press Enter.</small>
+
+            <label className="image-upload">
+              Meal image
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImage} />
+              <span>{processingImage ? 'Processing image...' : 'Choose a JPG, PNG or WebP image'}</span>
             </label>
+            {imageData && (
+              <div className="image-preview">
+                <img src={imageData} alt="Meal preview" />
+                <button type="button" className="secondary" onClick={() => setImageData(null)}>Remove image</button>
+              </div>
+            )}
+
             <div className="modal-actions">
-              <button type="button" className="secondary" onClick={() => setShowMealForm(false)}>Cancel</button>
-              <button className="primary" type="submit">Save recipe</button>
+              <button type="button" className="secondary" onClick={resetMealForm}>Cancel</button>
+              <button className="primary" type="submit" disabled={processingImage}>Save recipe</button>
             </div>
           </form>
         </div>
