@@ -6,6 +6,8 @@ type Ingredient = {
   quantity: number | null;
   unit: string | null;
   shopping_category: string;
+  notes?: string | null;
+  optional?: boolean;
 };
 
 type Meal = {
@@ -14,14 +16,30 @@ type Meal = {
   description: string | null;
   main_protein: string | null;
   category: string | null;
+  cuisine: string | null;
   prep_minutes: number;
   cook_minutes: number;
   total_minutes: number;
   servings: number;
+  difficulty: string;
+  instructions: string[];
+  dietary_tags: string[];
+  allergens: string[];
+  substitutions: string[];
+  notes: string | null;
+  image_url: string | null;
+  source_url: string | null;
+  favourite: boolean;
+  household_rating: number | null;
   ingredients: Ingredient[];
   active: boolean;
-  favourite: boolean;
-  image_url: string | null;
+};
+
+type IngredientDraft = {
+  key: string;
+  name: string;
+  quantity: string;
+  unit: string;
 };
 
 type PlanEntry = {
@@ -31,6 +49,7 @@ type PlanEntry = {
   title: string;
   entry_type: string;
   status: string;
+  servings: number | null;
   meal: Meal | null;
 };
 
@@ -71,6 +90,7 @@ const splitCategories = (value: string | null) =>
   (value || '').split(',').map((item) => item.trim()).filter(Boolean);
 
 const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
+const draftKey = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const resizeImage = (file: File): Promise<string> => new Promise((resolve, reject) => {
   if (!file.type.startsWith('image/')) {
@@ -105,6 +125,29 @@ const resizeImage = (file: File): Promise<string> => new Promise((resolve, rejec
   reader.readAsDataURL(file);
 });
 
+const mealPayload = (meal: Meal, overrides: Partial<Meal> = {}) => ({
+  name: overrides.name ?? meal.name,
+  description: overrides.description ?? meal.description,
+  main_protein: null,
+  category: overrides.category ?? meal.category,
+  cuisine: overrides.cuisine ?? meal.cuisine,
+  prep_minutes: overrides.prep_minutes ?? meal.prep_minutes,
+  cook_minutes: overrides.cook_minutes ?? meal.cook_minutes,
+  servings: overrides.servings ?? meal.servings,
+  difficulty: overrides.difficulty ?? meal.difficulty,
+  instructions: overrides.instructions ?? meal.instructions,
+  dietary_tags: overrides.dietary_tags ?? meal.dietary_tags,
+  allergens: overrides.allergens ?? meal.allergens,
+  substitutions: overrides.substitutions ?? meal.substitutions,
+  notes: overrides.notes ?? meal.notes,
+  image_url: overrides.image_url ?? meal.image_url,
+  source_url: overrides.source_url ?? meal.source_url,
+  favourite: overrides.favourite ?? meal.favourite,
+  household_rating: overrides.household_rating ?? meal.household_rating,
+  ingredients: overrides.ingredients ?? meal.ingredients,
+  active: overrides.active ?? meal.active
+});
+
 function App() {
   const [view, setView] = useState<View>('dashboard');
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
@@ -115,13 +158,15 @@ function App() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [showMealForm, setShowMealForm] = useState(false);
+  const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const [detailServings, setDetailServings] = useState(4);
   const [planningMeal, setPlanningMeal] = useState<Meal | null>(null);
   const [planningDays, setPlanningDays] = useState(14);
   const [savingDate, setSavingDate] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [categoryInput, setCategoryInput] = useState('');
-  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-  const [ingredientInput, setIngredientInput] = useState('');
+  const [ingredientRows, setIngredientRows] = useState<IngredientDraft[]>([]);
   const [imageData, setImageData] = useState<string | null>(null);
   const [processingImage, setProcessingImage] = useState(false);
 
@@ -137,10 +182,14 @@ function App() {
       setDashboard(dashboardData);
       setMeals(mealData);
       setPlan(planData);
+      if (selectedMeal) {
+        const refreshed = mealData.find((meal) => meal.id === selectedMeal.id) || null;
+        setSelectedMeal(refreshed);
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'DinnerHub could not load');
     }
-  }, [days, planningDays]);
+  }, [days, planningDays, selectedMeal?.id]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -151,14 +200,6 @@ function App() {
   const categoryOptions = useMemo(() => Array.from(new Set(
     meals.flatMap((meal) => splitCategories(meal.category))
   )).sort((a, b) => a.localeCompare(b)), [meals]);
-
-  const ingredientSuggestions = useMemo(() => {
-    const term = ingredientInput.toLowerCase().trim();
-    return ingredientOptions
-      .filter((item) => !selectedIngredients.some((selected) => selected.toLowerCase() === item.toLowerCase()))
-      .filter((item) => !term || item.toLowerCase().includes(term))
-      .slice(0, 8);
-  }, [ingredientInput, ingredientOptions, selectedIngredients]);
 
   const categorySuggestions = useMemo(() => {
     const term = categoryInput.toLowerCase().trim();
@@ -180,15 +221,6 @@ function App() {
 
   const planByDate = useMemo(() => new Map(plan.map((entry) => [entry.meal_date, entry])), [plan]);
 
-  const addIngredient = (raw: string) => {
-    const value = normalize(raw);
-    if (!value) return;
-    if (!selectedIngredients.some((item) => item.toLowerCase() === value.toLowerCase())) {
-      setSelectedIngredients((current) => [...current, value]);
-    }
-    setIngredientInput('');
-  };
-
   const addCategory = (raw: string) => {
     const value = normalize(raw);
     if (!value) return;
@@ -198,14 +230,10 @@ function App() {
     setCategoryInput('');
   };
 
-  const handleTokenKey = (
-    event: KeyboardEvent<HTMLInputElement>,
-    value: string,
-    add: (entry: string) => void
-  ) => {
+  const handleCategoryKey = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault();
-      add(value);
+      addCategory(categoryInput);
     }
   };
 
@@ -222,49 +250,123 @@ function App() {
     }
   };
 
+  const emptyIngredient = (): IngredientDraft => ({ key: draftKey(), name: '', quantity: '', unit: '' });
+
+  const openCreateForm = () => {
+    setEditingMeal(null);
+    setSelectedCategories([]);
+    setCategoryInput('');
+    setIngredientRows([emptyIngredient()]);
+    setImageData(null);
+    setShowMealForm(true);
+  };
+
+  const openEditForm = (meal: Meal) => {
+    setEditingMeal(meal);
+    setSelectedCategories(splitCategories(meal.category));
+    setCategoryInput('');
+    setIngredientRows(meal.ingredients.length ? meal.ingredients.map((ingredient) => ({
+      key: draftKey(),
+      name: ingredient.name,
+      quantity: ingredient.quantity === null ? '' : String(ingredient.quantity),
+      unit: ingredient.unit || ''
+    })) : [emptyIngredient()]);
+    setImageData(meal.image_url);
+    setSelectedMeal(null);
+    setShowMealForm(true);
+  };
+
   const resetMealForm = () => {
     setShowMealForm(false);
+    setEditingMeal(null);
     setSelectedCategories([]);
-    setSelectedIngredients([]);
     setCategoryInput('');
-    setIngredientInput('');
+    setIngredientRows([]);
     setImageData(null);
+  };
+
+  const updateIngredientRow = (key: string, field: keyof Omit<IngredientDraft, 'key'>, value: string) => {
+    setIngredientRows((current) => current.map((row) => row.key === key ? { ...row, [field]: value } : row));
   };
 
   const saveMeal = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedIngredients.length) {
+    const ingredients = ingredientRows
+      .map((row) => ({ ...row, name: normalize(row.name) }))
+      .filter((row) => row.name);
+    if (!ingredients.length) {
       setError('Add at least one ingredient');
       return;
     }
     const form = new FormData(event.currentTarget);
+    const payload = {
+      name: form.get('name'),
+      description: form.get('description') || null,
+      main_protein: null,
+      category: selectedCategories.join(', ') || null,
+      cuisine: form.get('cuisine') || null,
+      prep_minutes: Number(form.get('prep') || 0),
+      cook_minutes: Number(form.get('cook') || 0),
+      servings: Number(form.get('servings') || 4),
+      difficulty: form.get('difficulty') || 'easy',
+      image_url: imageData,
+      source_url: form.get('source_url') || null,
+      notes: form.get('notes') || null,
+      ingredients: ingredients.map((row) => ({
+        name: row.name,
+        quantity: row.quantity === '' ? null : Number(row.quantity),
+        unit: row.unit || null,
+        shopping_category: 'Other',
+        notes: null,
+        optional: false
+      })),
+      instructions: String(form.get('instructions') || '')
+        .split('\n')
+        .map((item) => item.trim())
+        .filter(Boolean),
+      dietary_tags: editingMeal?.dietary_tags || [],
+      allergens: editingMeal?.allergens || [],
+      substitutions: editingMeal?.substitutions || [],
+      favourite: editingMeal?.favourite || false,
+      household_rating: editingMeal?.household_rating || null,
+      active: true
+    };
     try {
-      await api<Meal>('meals', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: form.get('name'),
-          description: form.get('description') || null,
-          main_protein: null,
-          category: selectedCategories.join(', ') || null,
-          prep_minutes: Number(form.get('prep') || 0),
-          cook_minutes: Number(form.get('cook') || 0),
-          servings: Number(form.get('servings') || 4),
-          difficulty: 'easy',
-          image_url: imageData,
-          ingredients: selectedIngredients.map((name) => ({
-            name,
-            quantity: null,
-            unit: null,
-            shopping_category: 'Other'
-          })),
-          instructions: []
-        })
+      await api<Meal>(editingMeal ? `meals/${editingMeal.id}` : 'meals', {
+        method: editingMeal ? 'PUT' : 'POST',
+        body: JSON.stringify(payload)
       });
       resetMealForm();
-      setMessage('Recipe added');
+      setMessage(editingMeal ? 'Recipe updated' : 'Recipe added');
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Recipe could not be saved');
+    }
+  };
+
+  const toggleFavourite = async (meal: Meal) => {
+    try {
+      const updated = await api<Meal>(`meals/${meal.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(mealPayload(meal, { favourite: !meal.favourite }))
+      });
+      setSelectedMeal(updated);
+      setMessage(updated.favourite ? 'Added to favourites' : 'Removed from favourites');
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Favourite could not be updated');
+    }
+  };
+
+  const archiveMeal = async (meal: Meal) => {
+    if (!window.confirm(`Archive ${meal.name}? It will be removed from the active recipe list.`)) return;
+    try {
+      await api<void>(`meals/${meal.id}`, { method: 'DELETE' });
+      setSelectedMeal(null);
+      setMessage('Recipe archived');
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Recipe could not be archived');
     }
   };
 
@@ -294,6 +396,7 @@ function App() {
       .filter((entry): entry is PlanEntry => Boolean(entry?.meal));
     const rows = new Map<string, { name: string; quantity: number; hasQuantity: boolean; unit: string; meals: Set<string> }>();
     selectedPlan.forEach((entry) => {
+      const servingMultiplier = entry.servings && entry.meal?.servings ? entry.servings / entry.meal.servings : 1;
       entry.meal?.ingredients.forEach((ingredient) => {
         const key = `${ingredient.name.toLowerCase()}|${ingredient.unit || ''}`;
         const current = rows.get(key) || {
@@ -304,7 +407,7 @@ function App() {
           meals: new Set<string>()
         };
         if (ingredient.quantity !== null) {
-          current.quantity += ingredient.quantity;
+          current.quantity += ingredient.quantity * servingMultiplier;
           current.hasQuantity = true;
         }
         current.meals.add(entry.title);
@@ -343,7 +446,7 @@ function App() {
           <div className="eyebrow">Plan dinner. Shop smarter. Eat better.</div>
           <h1>DinnerHub</h1>
         </div>
-        <button className="primary" onClick={() => setShowMealForm(true)}>Add recipe</button>
+        <button className="primary" onClick={openCreateForm}>Add recipe</button>
       </header>
 
       <nav className="tabs" aria-label="DinnerHub navigation">
@@ -409,16 +512,20 @@ function App() {
                     : <div className="meal-placeholder">{meal.name.slice(0, 1).toUpperCase()}</div>}
                   <div className="meal-card-body">
                     <span>{meal.category || 'Dinner'}</span>
-                    <h3>{meal.name}</h3>
+                    <h3>{meal.favourite ? '★ ' : ''}{meal.name}</h3>
                     <p>{meal.description || 'No description added yet.'}</p>
                     <div className="meal-meta">
                       <span>{meal.prep_minutes}m prep</span>
                       <span>{meal.cook_minutes}m cook</span>
                       <span>{meal.servings} serves</span>
                     </div>
-                    <button type="button" className="plan-meal-button" onClick={() => setPlanningMeal(meal)}>
-                      Add to meal plan
-                    </button>
+                    <div className="meal-card-actions">
+                      <button type="button" className="secondary" onClick={() => {
+                        setSelectedMeal(meal);
+                        setDetailServings(meal.servings);
+                      }}>View recipe</button>
+                      <button type="button" className="primary" onClick={() => setPlanningMeal(meal)}>Add to plan</button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -475,6 +582,62 @@ function App() {
         )}
       </main>
 
+      {selectedMeal && (
+        <div className="modal-backdrop" onMouseDown={() => setSelectedMeal(null)}>
+          <section className="modal recipe-detail-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="modal-heading">
+              <div><span className="eyebrow">Recipe</span><h2>{selectedMeal.name}</h2></div>
+              <button type="button" className="icon-button" onClick={() => setSelectedMeal(null)}>×</button>
+            </div>
+            {selectedMeal.image_url && <img className="detail-image" src={selectedMeal.image_url} alt="" />}
+            <div className="detail-summary">
+              <span>{selectedMeal.prep_minutes}m prep</span>
+              <span>{selectedMeal.cook_minutes}m cook</span>
+              <span>{selectedMeal.difficulty}</span>
+            </div>
+            {selectedMeal.description && <p className="detail-description">{selectedMeal.description}</p>}
+            <div className="serving-control">
+              <label>Scale recipe</label>
+              <div>
+                <button type="button" onClick={() => setDetailServings(Math.max(1, detailServings - 1))}>−</button>
+                <strong>{detailServings} serves</strong>
+                <button type="button" onClick={() => setDetailServings(detailServings + 1)}>+</button>
+              </div>
+            </div>
+            <section className="recipe-section">
+              <h3>Ingredients</h3>
+              <ul className="ingredient-list">
+                {selectedMeal.ingredients.map((ingredient) => {
+                  const scaled = ingredient.quantity === null ? null : ingredient.quantity * (detailServings / selectedMeal.servings);
+                  return <li key={`${ingredient.id}-${ingredient.name}`}>
+                    <span>{ingredient.name}</span>
+                    <strong>{scaled === null ? '' : Number(scaled.toFixed(2))} {ingredient.unit || ''}</strong>
+                  </li>;
+                })}
+              </ul>
+            </section>
+            <section className="recipe-section">
+              <h3>Method</h3>
+              {selectedMeal.instructions.length ? (
+                <ol className="instruction-list">
+                  {selectedMeal.instructions.map((instruction, index) => <li key={`${index}-${instruction}`}>{instruction}</li>)}
+                </ol>
+              ) : <p className="muted">No cooking instructions have been added yet.</p>}
+            </section>
+            {selectedMeal.notes && <section className="recipe-section"><h3>Notes</h3><p>{selectedMeal.notes}</p></section>}
+            <div className="modal-actions split-actions">
+              <div>
+                <button type="button" className="secondary" onClick={() => void toggleFavourite(selectedMeal)}>
+                  {selectedMeal.favourite ? 'Remove favourite' : 'Add favourite'}
+                </button>
+                <button type="button" className="danger" onClick={() => void archiveMeal(selectedMeal)}>Archive</button>
+              </div>
+              <button type="button" className="primary" onClick={() => openEditForm(selectedMeal)}>Edit recipe</button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {planningMeal && (
         <div className="modal-backdrop" onMouseDown={() => setPlanningMeal(null)}>
           <section className="modal plan-picker-modal" onMouseDown={(event) => event.stopPropagation()}>
@@ -513,13 +676,13 @@ function App() {
 
       {showMealForm && (
         <div className="modal-backdrop" onMouseDown={resetMealForm}>
-          <form className="modal" onSubmit={saveMeal} onMouseDown={(event) => event.stopPropagation()}>
+          <form className="modal recipe-form-modal" onSubmit={saveMeal} onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-heading">
-              <div><span className="eyebrow">Recipe library</span><h2>Add a meal</h2></div>
+              <div><span className="eyebrow">Recipe library</span><h2>{editingMeal ? 'Edit meal' : 'Add a meal'}</h2></div>
               <button type="button" className="icon-button" onClick={resetMealForm}>×</button>
             </div>
-            <label>Meal name<input name="name" required maxLength={180} /></label>
-            <label>Description<textarea name="description" rows={3} /></label>
+            <label>Meal name<input name="name" required maxLength={180} defaultValue={editingMeal?.name || ''} /></label>
+            <label>Description<textarea name="description" rows={3} defaultValue={editingMeal?.description || ''} /></label>
 
             <label>Categories</label>
             <div className="token-field">
@@ -531,7 +694,7 @@ function App() {
                   </button>
                 ))}
                 <input value={categoryInput} onChange={(event) => setCategoryInput(event.target.value)}
-                  onKeyDown={(event) => handleTokenKey(event, categoryInput, addCategory)}
+                  onKeyDown={handleCategoryKey}
                   placeholder={selectedCategories.length ? 'Add another category' : 'Type or select categories'} />
               </div>
               {(categorySuggestions.length > 0 || categoryInput.trim()) && (
@@ -549,38 +712,38 @@ function App() {
             </div>
 
             <div className="form-grid three">
-              <label>Prep minutes<input name="prep" type="number" min="0" defaultValue="15" /></label>
-              <label>Cook minutes<input name="cook" type="number" min="0" defaultValue="30" /></label>
-              <label>Servings<input name="servings" type="number" min="1" defaultValue="4" /></label>
+              <label>Prep minutes<input name="prep" type="number" min="0" defaultValue={editingMeal?.prep_minutes ?? 15} /></label>
+              <label>Cook minutes<input name="cook" type="number" min="0" defaultValue={editingMeal?.cook_minutes ?? 30} /></label>
+              <label>Servings<input name="servings" type="number" min="1" defaultValue={editingMeal?.servings ?? 4} /></label>
+            </div>
+            <div className="form-grid">
+              <label>Cuisine<input name="cuisine" defaultValue={editingMeal?.cuisine || ''} placeholder="Italian" /></label>
+              <label>Difficulty<select name="difficulty" defaultValue={editingMeal?.difficulty || 'easy'}>
+                <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+              </select></label>
             </div>
 
-            <label>Ingredients</label>
-            <div className="token-field">
-              <div className="token-list">
-                {selectedIngredients.map((item) => (
-                  <button type="button" className="token" key={item}
-                    onClick={() => setSelectedIngredients((current) => current.filter((entry) => entry !== item))}>
-                    {item}<span>×</span>
-                  </button>
-                ))}
-                <input value={ingredientInput} onChange={(event) => setIngredientInput(event.target.value)}
-                  onKeyDown={(event) => handleTokenKey(event, ingredientInput, addIngredient)}
-                  placeholder={selectedIngredients.length ? 'Add another ingredient' : 'Type an ingredient and press Enter'} />
-              </div>
-              {(ingredientSuggestions.length > 0 || ingredientInput.trim()) && (
-                <div className="suggestions">
-                  {ingredientSuggestions.map((item) => (
-                    <button type="button" key={item} onClick={() => addIngredient(item)}>{item}</button>
-                  ))}
-                  {ingredientInput.trim() && !ingredientOptions.some((item) => item.toLowerCase() === ingredientInput.trim().toLowerCase()) && (
-                    <button type="button" className="add-new" onClick={() => addIngredient(ingredientInput)}>
-                      Add “{normalize(ingredientInput)}” as a new ingredient
-                    </button>
-                  )}
-                </div>
-              )}
+            <div className="ingredient-editor-heading">
+              <div><label>Ingredients</label><small>Add quantity and unit so the shopping list can total items correctly.</small></div>
+              <button type="button" className="secondary" onClick={() => setIngredientRows((current) => [...current, emptyIngredient()])}>Add ingredient</button>
             </div>
-            <small className="field-help">Choose existing ingredients or type a new one and press Enter.</small>
+            <datalist id="ingredient-options">
+              {ingredientOptions.map((item) => <option value={item} key={item} />)}
+            </datalist>
+            <div className="ingredient-editor">
+              {ingredientRows.map((row) => (
+                <div className="ingredient-row" key={row.key}>
+                  <input list="ingredient-options" value={row.name} onChange={(event) => updateIngredientRow(row.key, 'name', event.target.value)} placeholder="Ingredient" />
+                  <input type="number" min="0" step="any" value={row.quantity} onChange={(event) => updateIngredientRow(row.key, 'quantity', event.target.value)} placeholder="Qty" />
+                  <input value={row.unit} onChange={(event) => updateIngredientRow(row.key, 'unit', event.target.value)} placeholder="Unit" />
+                  <button type="button" className="icon-button small" aria-label="Remove ingredient" onClick={() => setIngredientRows((current) => current.filter((item) => item.key !== row.key))}>×</button>
+                </div>
+              ))}
+            </div>
+
+            <label>Method<textarea name="instructions" rows={7} defaultValue={(editingMeal?.instructions || []).join('\n')} placeholder={'Enter one instruction per line\nFor example: Heat oil in a pan'} /></label>
+            <label>Notes<textarea name="notes" rows={3} defaultValue={editingMeal?.notes || ''} /></label>
+            <label>Source URL<input name="source_url" type="url" defaultValue={editingMeal?.source_url || ''} placeholder="https://..." /></label>
 
             <label className="image-upload">
               Meal image
@@ -596,7 +759,7 @@ function App() {
 
             <div className="modal-actions">
               <button type="button" className="secondary" onClick={resetMealForm}>Cancel</button>
-              <button className="primary" type="submit" disabled={processingImage}>Save recipe</button>
+              <button className="primary" type="submit" disabled={processingImage}>{editingMeal ? 'Save changes' : 'Save recipe'}</button>
             </div>
           </form>
         </div>
