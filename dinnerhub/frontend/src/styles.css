@@ -39,17 +39,15 @@ h2 { margin-bottom: 0; font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -.0
 .feature-card h2 { margin: 8px 0; font-size: clamp(1.8rem, 4vw, 3.1rem); }
 .feature-card p { margin-bottom: 0; color: inherit; opacity: .75; }
 .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin: 36px 0 16px; }
+.heading-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .upcoming-list, .planner { display: grid; gap: 10px; }
 .day-row, .plan-row { display: grid; grid-template-columns: minmax(120px, .7fr) 1.5fr .8fr; gap: 18px; align-items: center; padding: 17px 18px; border-radius: 15px; background: var(--card); border: 1px solid var(--line); }
 .day-row time, .day-row span { color: var(--muted); }
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
-.stats-grid article { background: var(--accent); padding: 22px; border-radius: 16px; }
-.stats-grid strong { display: block; font-size: 1.8rem; color: var(--green-dark); }
-.stats-grid span { color: var(--muted); font-size: .85rem; }
 .search { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: white; margin-bottom: 18px; }
 .meal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .meal-card { background: white; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
-.meal-placeholder { min-height: 150px; display: grid; place-items: center; background: linear-gradient(145deg, #d4e0c6, #9eb48d); font-size: 4rem; font-weight: 900; color: rgba(22, 52, 30, .65); }
+.meal-placeholder, .meal-image { width: 100%; height: 180px; object-fit: cover; }
+.meal-placeholder { display: grid; place-items: center; background: linear-gradient(145deg, #d4e0c6, #9eb48d); font-size: 4rem; font-weight: 900; color: rgba(22, 52, 30, .65); }
 .meal-card-body { padding: 20px; }
 .meal-card-body > span { color: var(--green); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .meal-card h3 { margin: 8px 0; font-size: 1.3rem; }
@@ -65,46 +63,58 @@ h2 { margin-bottom: 0; font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -.0
 .plan-row > div span { display: block; font-size: .72rem; color: var(--green); text-transform: uppercase; font-weight: 800; }
 .plan-row select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: white; }
 .status.planned { color: #2d6336; background: #e3f0df; }
-.empty-state { grid-column: 1 / -1; text-align: center; padding: 70px 20px; border: 1px dashed #bfc9bb; border-radius: 18px; color: var(--muted); }
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 25, 17, .58); display: grid; place-items: center; padding: 20px; z-index: 10; }
-.modal { width: min(680px, 100%); max-height: 92vh; overflow: auto; background: white; border-radius: 22px; padding: 24px; box-shadow: 0 30px 90px rgba(0,0,0,.3); }
+.modal { width: min(760px, 100%); max-height: 92vh; overflow: auto; background: white; border-radius: 22px; padding: 24px; box-shadow: 0 30px 90px rgba(0,0,0,.3); }
 .modal-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 16px; }
 .icon-button { border: 0; background: #edf0eb; width: 38px; height: 38px; border-radius: 50%; font-size: 1.3rem; flex: 0 0 auto; }
 .modal label { display: grid; gap: 7px; margin-bottom: 15px; color: var(--green-dark); font-weight: 700; }
 .modal input, .modal textarea { width: 100%; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; }
-.modal small { color: var(--muted); font-weight: 400; }
 .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .form-grid.three { grid-template-columns: repeat(3, 1fr); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 .plan-picker-modal { width: min(820px, 100%); }
-.modal-intro { color: var(--muted); margin: 8px 0 0; }
 .plan-picker-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
-.plan-picker-toolbar > span { color: var(--muted); font-weight: 750; }
 .plan-picker-list { display: grid; gap: 9px; }
 .plan-picker-row { display: grid; grid-template-columns: minmax(135px, .8fr) minmax(190px, 1.5fr) auto; gap: 16px; align-items: center; border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--card); }
 .plan-picker-row.today { border-color: #7f9e70; box-shadow: inset 4px 0 0 var(--green); }
-.plan-picker-date span, .plan-picker-current span { display: block; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; margin-bottom: 3px; }
+.plan-picker-row span { display: block; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 800; margin-bottom: 3px; }
 .plan-picker-row button { min-width: 96px; }
 .plan-picker-row button.selected { opacity: .7; }
+.token-field { position: relative; margin-bottom: 16px; }
+.token-list { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 50px; padding: 7px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.token-list:focus-within { border-color: #2367d1; box-shadow: 0 0 0 2px rgba(35, 103, 209, .15); }
+.token-list input { flex: 1 1 180px; min-width: 150px; border: 0; outline: 0; padding: 7px 5px; background: transparent; }
+.token { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; background: var(--accent); color: var(--green-dark); padding: 7px 10px; font-weight: 750; }
+.token span { font-size: 1rem; opacity: .7; }
+.suggestions { position: absolute; z-index: 20; width: 100%; margin-top: 5px; display: grid; max-height: 230px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); box-shadow: 0 16px 36px rgba(0,0,0,.14); }
+.suggestions button { border: 0; border-bottom: 1px solid var(--line); padding: 11px 13px; text-align: left; background: transparent; color: inherit; }
+.suggestions button:last-child { border-bottom: 0; }
+.suggestions button:hover { background: var(--accent); }
+.suggestions .add-new { color: var(--green); font-weight: 800; }
+.field-help { display: block; color: var(--muted); margin: -8px 0 18px; }
+.image-upload { border: 1px dashed #9aad9a; border-radius: 14px; padding: 16px; background: rgba(220, 232, 207, .35); }
+.image-upload input { padding: 0; border: 0; }
+.image-upload span { color: var(--muted); font-weight: 500; }
+.image-preview { display: grid; gap: 10px; margin-bottom: 18px; }
+.image-preview img { width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; border: 1px solid var(--line); }
+.image-preview button { justify-self: start; }
 @media (max-width: 800px) {
   .app-shell { padding: 20px 14px 44px; }
   .hero-grid, .meal-grid { grid-template-columns: 1fr; }
-  .day-row { grid-template-columns: 1fr; gap: 6px; }
-  .plan-row, .plan-picker-row { grid-template-columns: 1fr; gap: 10px; }
-  .status { justify-self: start; }
+  .day-row, .plan-row, .plan-picker-row { grid-template-columns: 1fr; gap: 10px; }
   .plan-picker-row button { width: 100%; }
-  .stats-grid { grid-template-columns: 1fr; }
   .topbar { align-items: flex-end; }
 }
 @media (max-width: 560px) {
   .topbar .primary { padding: 10px 13px; }
   .section-heading, .plan-picker-toolbar { align-items: flex-start; flex-direction: column; }
+  .heading-actions { width: 100%; justify-content: flex-start; }
   .form-grid, .form-grid.three { grid-template-columns: 1fr; }
   .feature-card { min-height: 190px; padding: 22px; }
 }
 @media (prefers-color-scheme: dark) {
   :root { color: #edf4ed; background: #0d1510; --cream: #0d1510; --card: #162019; --line: #2c3a30; --muted: #9cab9f; --accent: #253629; --green: #9bc78e; --green-dark: #e2f2dd; }
-  .search, .plan-row select, .modal, .modal input, .modal textarea { background: #162019; color: #edf4ed; }
+  .search, .plan-row select, .modal, .modal input, .modal textarea, .token-list { background: #162019; color: #edf4ed; }
   .segmented { background: #202c23; }
   .segmented button.active { background: #344438; color: white; }
   .meal-meta span, .status, .icon-button { background: #27342a; color: #b8c7ba; }
