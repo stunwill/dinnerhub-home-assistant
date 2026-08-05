@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+### Added
+
+- Added an **Add to meal plan** button to every recipe card.
+- Added a 7-day and 14-day picker showing the current meal assigned to each upcoming date.
+- Added direct Add and Change actions so a recipe can be assigned or replace an existing planned meal without leaving the Meals page.
+
 ## 0.1.1
 
 ### Fixed
