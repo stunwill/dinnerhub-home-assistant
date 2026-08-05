@@ -1,0 +1,50 @@
+.dashboard-meal-image-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 300px;
+}
+
+.dashboard-meal-image-card.has-recipe-image {
+  background-image:
+    linear-gradient(90deg, rgba(13, 35, 21, 0.9) 0%, rgba(13, 35, 21, 0.68) 48%, rgba(13, 35, 21, 0.18) 100%),
+    var(--dashboard-meal-image);
+  background-position: center;
+  background-size: cover;
+  color: #fff;
+}
+
+.dashboard-meal-image-card.has-recipe-image::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(7, 22, 12, 0.3) 100%);
+  pointer-events: none;
+}
+
+.dashboard-meal-image-card.has-recipe-image h2,
+.dashboard-meal-image-card.has-recipe-image h3,
+.dashboard-meal-image-card.has-recipe-image p,
+.dashboard-meal-image-card.has-recipe-image span,
+.dashboard-meal-image-card.has-recipe-image strong {
+  color: inherit;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.42);
+}
+
+.dashboard-meal-image-card.has-recipe-image.dashboard-meal-image-card--tomorrow {
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+@media (max-width: 760px) {
+  .dashboard-meal-image-card {
+    min-height: 240px;
+  }
+
+  .dashboard-meal-image-card.has-recipe-image {
+    background-image:
+      linear-gradient(180deg, rgba(13, 35, 21, 0.38) 0%, rgba(13, 35, 21, 0.9) 88%),
+      var(--dashboard-meal-image);
+    background-position: center;
+  }
+}
