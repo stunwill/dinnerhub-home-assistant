@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 
 from . import main
+from .filter_settings import router as filter_settings_router
 from .main import app
 from .models import Ingredient, RecipeIngredient
 from .shopping import router as shopping_router
@@ -46,11 +47,12 @@ def replace_ingredients_safely(db, meal, items) -> None:  # type: ignore[no-unty
 # API routes.
 main.replace_ingredients = replace_ingredients_safely
 
-# The original application ends with a catch-all SPA route. Register the
-# shopping API, then move its routes ahead of that fallback so GET requests
-# are handled by the API instead of index.html.
+# The original application ends with a catch-all SPA route. Register extension
+# APIs, then move their routes ahead of that fallback so GET requests are
+# handled by the API instead of index.html.
 original_count = len(app.router.routes)
 app.include_router(shopping_router)
+app.include_router(filter_settings_router)
 new_routes = app.router.routes[original_count:]
 del app.router.routes[original_count:]
 catch_all_index = max(0, len(app.router.routes) - 1)
