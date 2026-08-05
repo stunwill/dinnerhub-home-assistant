@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+
+- Added heart controls directly to recipe cards.
+- Added favourite-first recipe sorting.
+- Added a visual quick-filter panel inspired by guided menu-planning workflows.
+- Added Favourites, ingredient, category and cuisine filter types.
+- Added support for selecting up to two filters at once by default.
+- Added an in-app recipe filter configuration screen.
+- Added persistent filter settings stored in DinnerHub data storage.
+
+### Improved
+
+- Favourite recipes now remain grouped at the top of the meal library.
+- Filter options can be added, renamed, enabled, disabled or removed without editing code.
+- The maximum number of simultaneous filters can be configured from one to five.
+
+## 0.4.2
+
+### Fixed
+
+- Fixed meal-plan dates resolving to the previous day during early morning hours in positive UTC offsets.
+- Today, Tomorrow, meal assignment and shopping-list ranges now follow the browser's local calendar date.
+
 ## 0.4.1
 
 ### Fixed
