@@ -26,6 +26,18 @@ jobs:
       - run: ruff check app tests
       - run: pytest --cov=app --cov-report=term-missing
 
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile custom integration
+        run: python -m compileall -q custom_components/dinnerhub
+      - name: Validate JSON metadata
+        run: python -m json.tool custom_components/dinnerhub/manifest.json >/dev/null && python -m json.tool custom_components/dinnerhub/strings.json >/dev/null && python -m json.tool custom_components/dinnerhub/translations/en.json >/dev/null && python -m json.tool hacs.json >/dev/null
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -48,4 +60,4 @@ jobs:
         with:
           path: ./dinnerhub
       - name: Build amd64 container
-        run: docker build --build-arg BUILD_ARCH=amd64 --build-arg BUILD_VERSION=0.3.0 -t dinnerhub:test ./dinnerhub
+        run: docker build --build-arg BUILD_ARCH=amd64 --build-arg BUILD_VERSION=0.4.0 -t dinnerhub:test ./dinnerhub

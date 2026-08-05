@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+
+- Added a native Home Assistant custom integration with Config Flow setup.
+- Added automatic sensors for today's dinner and tomorrow's dinner.
+- Added shopping-list remaining and purchased item sensors.
+- Added an active recipe diagnostic sensor.
+- Added a DinnerHub meal-plan calendar entity.
+- Added Home Assistant buttons to rebuild 7-day and 14-day shopping lists.
+- Added a Home Assistant button to clear purchased shopping items.
+- Added HACS custom-repository metadata and installation documentation.
+
+### Improved
+
+- DinnerHub entities are grouped under one Home Assistant device.
+- Entity availability now follows the local DinnerHub API connection.
+- Native entities remove the need for manually maintained REST sensors after migration.
+
 ## 0.3.0
 
 ### Added
