@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1
+
+### Fixed
+
+- Fixed recipe editing when existing ingredient rows were replaced, which could be misreported as a duplicate meal name.
+- Existing recipes can now be saved without changing their name.
+- Recipe form validation errors are shown inside the open recipe modal.
+
+### Added
+
+- Added a pencil edit button to the top-right of every recipe card.
+
 ## 0.4.0
 
 ### Added

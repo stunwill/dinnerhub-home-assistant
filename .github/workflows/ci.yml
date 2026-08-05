@@ -60,4 +60,4 @@ jobs:
         with:
           path: ./dinnerhub
       - name: Build amd64 container
-        run: docker build --build-arg BUILD_ARCH=amd64 --build-arg BUILD_VERSION=0.4.0 -t dinnerhub:test ./dinnerhub
+        run: docker build --build-arg BUILD_ARCH=amd64 --build-arg BUILD_VERSION=0.4.1 -t dinnerhub:test ./dinnerhub
