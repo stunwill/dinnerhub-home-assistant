@@ -9,7 +9,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from .database import get_db
-from .models import Ingredient, Meal, MealPlanEntry, RecipeIngredient
+from .models import Meal, MealPlanEntry, RecipeIngredient
 from .shopping_models import ShoppingItem
 
 router = APIRouter(prefix="/api/shopping", tags=["shopping"])
@@ -54,7 +54,12 @@ def list_items(db: DbSession, include_checked: bool = True) -> list[dict]:
     if not include_checked:
         statement = statement.where(ShoppingItem.checked.is_(False))
     items = db.scalars(
-        statement.order_by(ShoppingItem.checked, ShoppingItem.shopping_category, ShoppingItem.sort_order, ShoppingItem.name)
+        statement.order_by(
+            ShoppingItem.checked,
+            ShoppingItem.shopping_category,
+            ShoppingItem.sort_order,
+            ShoppingItem.name,
+        )
     ).all()
     return [item_to_dict(item) for item in items]
 
@@ -166,7 +171,11 @@ def generate_from_plan(
                 current["has_quantity"] = True
             current["meal_names"].add(entry.meal.name)
 
-    for order, (source_key, value) in enumerate(sorted(aggregated.items(), key=lambda item: (item[1]["shopping_category"], item[1]["name"]))):
+    sorted_items = sorted(
+        aggregated.items(),
+        key=lambda item: (item[1]["shopping_category"], item[1]["name"]),
+    )
+    for order, (source_key, value) in enumerate(sorted_items):
         db.add(
             ShoppingItem(
                 name=value["name"],
@@ -183,13 +192,19 @@ def generate_from_plan(
 
     db.commit()
     count = db.scalar(select(func.count(ShoppingItem.id))) or 0
-    unchecked = db.scalar(select(func.count(ShoppingItem.id)).where(ShoppingItem.checked.is_(False))) or 0
+    unchecked = db.scalar(
+        select(func.count(ShoppingItem.id)).where(ShoppingItem.checked.is_(False))
+    ) or 0
     return {"generated": len(aggregated), "total": count, "unchecked": unchecked, "days": days}
 
 
 @router.get("/summary")
 def shopping_summary(db: DbSession) -> dict:
     total = db.scalar(select(func.count(ShoppingItem.id))) or 0
-    unchecked = db.scalar(select(func.count(ShoppingItem.id)).where(ShoppingItem.checked.is_(False))) or 0
-    manual = db.scalar(select(func.count(ShoppingItem.id)).where(ShoppingItem.source == "manual")) or 0
+    unchecked = db.scalar(
+        select(func.count(ShoppingItem.id)).where(ShoppingItem.checked.is_(False))
+    ) or 0
+    manual = db.scalar(
+        select(func.count(ShoppingItem.id)).where(ShoppingItem.source == "manual")
+    ) or 0
     return {"total": total, "unchecked": unchecked, "checked": total - unchecked, "manual": manual}
