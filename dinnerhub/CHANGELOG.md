@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- Added a dedicated Shopping tab inside DinnerHub.
+- Added a persistent shopping list stored in DinnerHub's SQLite database.
+- Added 7-day and 14-day list generation from the current meal plan.
+- Added serving-aware quantity aggregation across planned meals.
+- Added manual shopping items for groceries and household products.
+- Added shopping-category grouping.
+- Added purchased-item checkboxes that remain checked between sessions.
+- Added controls to remove individual items and clear purchased items.
+- Added a shopping-list summary showing remaining, purchased and manual items.
+
+### Improved
+
+- Rebuilding the list preserves manual items and the purchased state of matching planned ingredients.
+- Shopping-list meal references show which planned recipes require each item.
+
 ## 0.2.0
 
 ### Added
