@@ -37,7 +37,7 @@ if DATABASE_URL.startswith("sqlite"):
 
 def initialise_database() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    from . import models  # noqa: F401
+    from . import models, shopping_models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
 
