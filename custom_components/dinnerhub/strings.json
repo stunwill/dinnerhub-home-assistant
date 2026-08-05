@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to DinnerHub",
+        "description": "Connect Home Assistant to the local DinnerHub app.",
+        "data": {
+          "host": "DinnerHub API address"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to DinnerHub"
+    },
+    "abort": {
+      "already_configured": "This DinnerHub instance is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "dinner_today": {"name": "Dinner today"},
+      "dinner_tomorrow": {"name": "Dinner tomorrow"},
+      "shopping_remaining": {"name": "Shopping remaining"},
+      "shopping_purchased": {"name": "Shopping purchased"},
+      "active_recipes": {"name": "Active recipes"}
+    },
+    "button": {
+      "generate_shopping_7_days": {"name": "Build 7-day shopping list"},
+      "generate_shopping_14_days": {"name": "Build 14-day shopping list"},
+      "clear_purchased": {"name": "Clear purchased items"}
+    }
+  }
+}
