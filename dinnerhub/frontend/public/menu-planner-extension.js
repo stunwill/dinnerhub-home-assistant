@@ -109,8 +109,7 @@ const applyCardState = () => {
           });
           const index = state.meals.findIndex((item) => item.id === meal.id);
           if (index >= 0) state.meals[index] = updated;
-          applyCardState();
-          renderFilterBar();
+          enhance();
         } catch (error) {
           window.alert(error instanceof Error ? error.message : 'Favourite could not be updated');
         } finally {
@@ -120,9 +119,14 @@ const applyCardState = () => {
     }
 
     if (state.settings.favourites_first) {
-      records
-        .sort((a, b) => Number(Boolean(b.meal.favourite)) - Number(Boolean(a.meal.favourite)) || a.meal.name.localeCompare(b.meal.name))
-        .forEach(({ card }) => grid.appendChild(card));
+      const sorted = [...records].sort(
+        (a, b) => Number(Boolean(b.meal.favourite)) - Number(Boolean(a.meal.favourite)) || a.meal.name.localeCompare(b.meal.name)
+      );
+      const currentOrder = records.map(({ card }) => card.dataset.mealId).join(',');
+      const sortedOrder = sorted.map(({ card }) => card.dataset.mealId).join(',');
+      if (currentOrder !== sortedOrder) {
+        sorted.forEach(({ card }) => grid.appendChild(card));
+      }
     }
   } finally {
     state.applying = false;
@@ -138,8 +142,7 @@ const toggleFilter = (filterId) => {
   } else {
     state.activeFilters = [...state.activeFilters.slice(1), filterId];
   }
-  renderFilterBar();
-  applyCardState();
+  enhance();
 };
 
 const createFilterButton = (label, filterId, extraClass = '') => {
@@ -167,7 +170,7 @@ const renderFilterBar = () => {
 
   const heading = document.createElement('div');
   heading.className = 'planner-filter-heading';
-  heading.innerHTML = '<div><span>QUICK FILTERS</span><strong>Find a meal</strong><small>Select up to two filters</small></div>';
+  heading.innerHTML = `<div><span>QUICK FILTERS</span><strong>Find a meal</strong><small>Select up to ${state.settings.maximum_active_filters || 2} filters</small></div>`;
   const configure = document.createElement('button');
   configure.type = 'button';
   configure.className = 'planner-configure-button';
@@ -178,13 +181,13 @@ const renderFilterBar = () => {
 
   const chips = document.createElement('div');
   chips.className = 'planner-filter-chips';
-  chips.appendChild(createFilterButton('All recipes', 'all', 'all-filter'));
-  chips.lastElementChild.onclick = () => {
+  const allButton = createFilterButton('All recipes', 'all', 'all-filter');
+  allButton.onclick = () => {
     state.activeFilters = [];
-    renderFilterBar();
-    applyCardState();
+    enhance();
   };
-  chips.lastElementChild.classList.toggle('active', state.activeFilters.length === 0);
+  allButton.classList.toggle('active', state.activeFilters.length === 0);
+  chips.appendChild(allButton);
 
   if (state.settings.show_favourites_filter) {
     chips.appendChild(createFilterButton('♥ Favourites', 'favourites', 'favourites-filter'));
@@ -195,18 +198,20 @@ const renderFilterBar = () => {
   panel.appendChild(chips);
 };
 
+const escapeAttribute = (value) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+
 const filterRow = (filter = { label: '', kind: 'ingredient', value: '', enabled: true }) => {
   const row = document.createElement('div');
   row.className = 'planner-config-row';
   row.innerHTML = `
     <input class="filter-enabled" type="checkbox" ${filter.enabled ? 'checked' : ''} aria-label="Enabled">
-    <input class="filter-label" value="${filter.label.replaceAll('"', '&quot;')}" placeholder="Button label" maxlength="40">
+    <input class="filter-label" value="${escapeAttribute(filter.label)}" placeholder="Button label" maxlength="40">
     <select class="filter-kind">
       <option value="ingredient" ${filter.kind === 'ingredient' ? 'selected' : ''}>Ingredient</option>
       <option value="category" ${filter.kind === 'category' ? 'selected' : ''}>Category</option>
       <option value="cuisine" ${filter.kind === 'cuisine' ? 'selected' : ''}>Cuisine</option>
     </select>
-    <input class="filter-value" value="${filter.value.replaceAll('"', '&quot;')}" placeholder="Match value" maxlength="80">
+    <input class="filter-value" value="${escapeAttribute(filter.value)}" placeholder="Match value" maxlength="80">
     <button type="button" class="filter-remove" aria-label="Remove filter">×</button>
   `;
   row.querySelector('.filter-remove').onclick = () => row.remove();
@@ -266,8 +271,7 @@ const openConfiguration = () => {
       state.settings = await api('filter-settings', { method: 'PUT', body: JSON.stringify(payload) });
       state.activeFilters = [];
       closeConfiguration();
-      renderFilterBar();
-      applyCardState();
+      enhance();
     } catch (error) {
       errorBox.hidden = false;
       errorBox.textContent = error instanceof Error ? error.message : 'Configuration could not be saved';
@@ -276,17 +280,25 @@ const openConfiguration = () => {
   document.body.appendChild(backdrop);
 };
 
+const observeRoot = () => {
+  const root = document.getElementById('root');
+  if (state.observer && root) {
+    state.observer.observe(root, { childList: true, subtree: true });
+  }
+};
+
 const enhance = () => {
+  state.observer?.disconnect();
   renderFilterBar();
   applyCardState();
+  window.queueMicrotask(observeRoot);
 };
 
 const start = async () => {
   try {
     await refreshData();
-    enhance();
     state.observer = new MutationObserver(() => window.requestAnimationFrame(enhance));
-    state.observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+    enhance();
   } catch (error) {
     console.error('DinnerHub menu planner enhancements failed to start', error);
   }
