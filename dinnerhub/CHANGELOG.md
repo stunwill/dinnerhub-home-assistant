@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.3
+
+### Added
+
+- Added reusable ingredient autocomplete with keyboard and mouse selection.
+- Added ingredient pills and automatic creation of new ingredients.
+- Added multi-select meal categories with reusable suggestions and new-category creation.
+- Added meal image selection, client-side resizing and image previews.
+- Added CSV shopping-list export for the active 7-day or 14-day meal plan.
+
+### Changed
+
+- Removed the separate main-protein field from the recipe form because proteins are now managed as ingredients.
+- Meal cards now display uploaded meal images when available.
+
 ## 0.1.2
 
 ### Added
