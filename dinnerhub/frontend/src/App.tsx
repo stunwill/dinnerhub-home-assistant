@@ -76,14 +76,18 @@ function App() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [showMealForm, setShowMealForm] = useState(false);
+  const [planningMeal, setPlanningMeal] = useState<Meal | null>(null);
+  const [planningDays, setPlanningDays] = useState(14);
+  const [savingDate, setSavingDate] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError('');
     try {
+      const planDays = Math.max(days, planningDays);
       const [dashboardData, mealData, planData] = await Promise.all([
         api<Dashboard>(`dashboard?days=${days}`),
         api<Meal[]>('meals'),
-        api<PlanEntry[]>(`meal-plan?start=${isoDate(0)}&days=${days}`)
+        api<PlanEntry[]>(`meal-plan?start=${isoDate(0)}&days=${planDays}`)
       ]);
       setDashboard(dashboardData);
       setMeals(mealData);
@@ -91,7 +95,7 @@ function App() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'DinnerHub could not load');
     }
-  }, [days]);
+  }, [days, planningDays]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -145,6 +149,7 @@ function App() {
   };
 
   const assignMeal = async (mealDate: string, mealId: number | null, entryType = 'meal') => {
+    setSavingDate(mealDate);
     try {
       if (!mealId && entryType === 'meal') {
         const response = await fetch(`api/meal-plan/${mealDate}`, { method: 'DELETE' });
@@ -159,6 +164,8 @@ function App() {
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Meal plan could not be updated');
+    } finally {
+      setSavingDate(null);
     }
   };
 
@@ -220,7 +227,7 @@ function App() {
             <section className="stats-grid">
               <article><strong>{dashboard?.active_meals ?? 0}</strong><span>Active recipes</span></article>
               <article><strong>{days - (dashboard?.unplanned_days ?? days)}</strong><span>Days planned</span></article>
-              <article><strong>{dashboard?.version || '0.1.0-dev'}</strong><span>Installed version</span></article>
+              <article><strong>{dashboard?.version || '0.1.1'}</strong><span>Installed version</span></article>
             </section>
           </>
         )}
@@ -249,6 +256,13 @@ function App() {
                       <span>{meal.cook_minutes}m cook</span>
                       <span>{meal.servings} serves</span>
                     </div>
+                    <button
+                      type="button"
+                      className="plan-meal-button"
+                      onClick={() => setPlanningMeal(meal)}
+                    >
+                      Add to meal plan
+                    </button>
                   </div>
                 </article>
               ))}
@@ -308,6 +322,80 @@ function App() {
           </>
         )}
       </main>
+
+      {planningMeal && (
+        <div className="modal-backdrop" onMouseDown={() => setPlanningMeal(null)}>
+          <section
+            className="modal plan-picker-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="plan-picker-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="modal-heading">
+              <div>
+                <span className="eyebrow">Add recipe to plan</span>
+                <h2 id="plan-picker-title">{planningMeal.name}</h2>
+                <p className="modal-intro">Choose an upcoming day. Existing meals can be replaced directly.</p>
+              </div>
+              <button type="button" className="icon-button" onClick={() => setPlanningMeal(null)}>×</button>
+            </div>
+
+            <div className="plan-picker-toolbar">
+              <span>Upcoming days</span>
+              <div className="segmented">
+                <button
+                  type="button"
+                  className={planningDays === 7 ? 'active' : ''}
+                  onClick={() => setPlanningDays(7)}
+                >
+                  7 days
+                </button>
+                <button
+                  type="button"
+                  className={planningDays === 14 ? 'active' : ''}
+                  onClick={() => setPlanningDays(14)}
+                >
+                  14 days
+                </button>
+              </div>
+            </div>
+
+            <div className="plan-picker-list">
+              {Array.from({ length: planningDays }, (_, offset) => {
+                const dateValue = isoDate(offset);
+                const entry = planByDate.get(dateValue);
+                const alreadySelected = entry?.meal_id === planningMeal.id;
+                const buttonLabel = alreadySelected ? 'Selected' : entry ? 'Change' : 'Add';
+                return (
+                  <article className={offset === 0 ? 'plan-picker-row today' : 'plan-picker-row'} key={dateValue}>
+                    <div className="plan-picker-date">
+                      <span>{offset === 0 ? 'Today' : formatDate(dateValue).split(',')[0]}</span>
+                      <strong>{formatDate(dateValue)}</strong>
+                    </div>
+                    <div className="plan-picker-current">
+                      <span>Current meal</span>
+                      <strong>{entry?.title || 'Nothing planned'}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      className={alreadySelected ? 'secondary selected' : entry ? 'secondary' : 'primary'}
+                      disabled={alreadySelected || savingDate === dateValue}
+                      onClick={() => void assignMeal(dateValue, planningMeal.id)}
+                    >
+                      {savingDate === dateValue ? 'Saving...' : buttonLabel}
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="modal-actions">
+              <button type="button" className="secondary" onClick={() => setPlanningMeal(null)}>Close</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {showMealForm && (
         <div className="modal-backdrop" onMouseDown={() => setShowMealForm(false)}>
