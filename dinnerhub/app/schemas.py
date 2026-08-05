@@ -28,7 +28,7 @@ class MealBase(BaseModel):
     name: str = Field(min_length=1, max_length=180)
     description: str | None = None
     main_protein: str | None = Field(default=None, max_length=80)
-    category: str | None = Field(default=None, max_length=80)
+    category: str | None = Field(default=None, max_length=500)
     cuisine: str | None = Field(default=None, max_length=80)
     prep_minutes: int = Field(default=0, ge=0, le=1440)
     cook_minutes: int = Field(default=0, ge=0, le=2880)
@@ -39,7 +39,7 @@ class MealBase(BaseModel):
     allergens: list[str] = Field(default_factory=list, max_length=50)
     substitutions: list[str] = Field(default_factory=list, max_length=50)
     notes: str | None = None
-    image_url: HttpUrl | None = None
+    image_url: str | None = Field(default=None, max_length=2_500_000)
     source_url: HttpUrl | None = None
     favourite: bool = False
     household_rating: float | None = Field(default=None, ge=0, le=5)
