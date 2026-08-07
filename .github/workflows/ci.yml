@@ -16,7 +16,7 @@ jobs:
       run:
         working-directory: dinnerhub
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -29,7 +29,7 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -44,7 +44,7 @@ jobs:
       run:
         working-directory: dinnerhub/frontend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -60,7 +60,7 @@ jobs:
   validate-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: frenck/action-addon-linter@v2
         with:
           path: ./dinnerhub
