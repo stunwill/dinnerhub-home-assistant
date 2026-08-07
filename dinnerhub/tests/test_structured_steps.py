@@ -38,13 +38,13 @@ def test_structured_steps_render_scaled_amounts(client):
         ],
     )
     assert saved.status_code == 200
-    assert saved.json()[0]["rendered_instruction"] == "Brown 400 g Chicken thigh until golden"
-    assert saved.json()[1]["rendered_instruction"] == "Add 2 tbsp Tomato paste and cook briefly"
+    assert saved.json()[0]["rendered_instruction"] == "Brown 400 g Chicken Thigh until golden"
+    assert saved.json()[1]["rendered_instruction"] == "Add 2 tbsp Tomato Paste and cook briefly"
 
     scaled = client.get(f"/api/meals/{meal_id}/steps?servings=6")
     assert scaled.status_code == 200
-    assert "600 g Chicken thigh" in scaled.json()[0]["rendered_instruction"]
-    assert "3 tbsp Tomato paste" in scaled.json()[1]["rendered_instruction"]
+    assert "600 g Chicken Thigh" in scaled.json()[0]["rendered_instruction"]
+    assert "3 tbsp Tomato Paste" in scaled.json()[1]["rendered_instruction"]
 
 
 def test_legacy_instructions_are_returned_when_no_structured_steps_exist(client):
