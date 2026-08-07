@@ -24,6 +24,34 @@ class IngredientOutput(IngredientInput):
     id: int
 
 
+class RecipeStepInput(BaseModel):
+    instruction: str = Field(min_length=1, max_length=2000)
+    ingredient_names: list[str] = Field(default_factory=list, max_length=30)
+    timer_minutes: int | None = Field(default=None, ge=1, le=1440)
+    note: str | None = Field(default=None, max_length=500)
+
+    @field_validator("instruction", "note", mode="before")
+    @classmethod
+    def trim_step_text(cls, value):  # type: ignore[no-untyped-def]
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("ingredient_names")
+    @classmethod
+    def clean_ingredient_names(cls, value: list[str]) -> list[str]:
+        result: list[str] = []
+        for item in value:
+            cleaned = " ".join(item.strip().split())
+            if cleaned and cleaned.lower() not in {entry.lower() for entry in result}:
+                result.append(cleaned)
+        return result
+
+
+class RecipeStepOutput(RecipeStepInput):
+    id: int | None = None
+    position: int
+    rendered_instruction: str | None = None
+
+
 class MealBase(BaseModel):
     name: str = Field(min_length=1, max_length=180)
     description: str | None = None
