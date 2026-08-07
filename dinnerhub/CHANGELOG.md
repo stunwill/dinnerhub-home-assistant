@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+
+- Added a guided menu-plan builder with selectable 3, 5, 7, 10 and 14 day planning lengths.
+- Added visual day slots with recipe images and direct Add or Change actions.
+- Added suggested recipes ordered by favourites and household rating.
+- Added separate meal scores for Stu, Kristy and Sienna.
+- Added calculated household average scores out of 10.
+- Added household-score badges on recipe cards and minimum-score filtering.
+- Added a new DinnerHub by Stu brand treatment with a fork-and-knife emblem.
+
+### Improved
+
+- Increased the maximum page width to use more of the available browser window, similar to MediaHub.
+- Improved desktop and mobile responsiveness for planning, ratings and recipe discovery.
+- Preserved existing meals, plans, favourites and shopping data through additive database changes.
+
+## 0.5.1
+
+### Added
+
+- Added recipe images to the Tonight and Tomorrow dashboard cards.
+- Added readable image overlays and mobile styling.
+
 ## 0.5.0
 
 ### Added
