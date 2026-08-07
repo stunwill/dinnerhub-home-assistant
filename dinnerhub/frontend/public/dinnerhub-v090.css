@@ -1,0 +1,224 @@
+.dh09-cooking-step {
+  display: grid;
+  gap: 10px;
+}
+
+.dh09-step-text {
+  display: block;
+}
+
+.dh09-step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.dh09-step-meta span {
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #eef4ec;
+  color: #315c3c;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.dh09-step-meta .timer {
+  background: #eef0ff;
+  color: #4f46c7;
+}
+
+.dh09-structured-note,
+.dh09-structure-hint {
+  display: block;
+  margin-top: 10px;
+  color: #68746b;
+}
+
+.dh09-structure-button {
+  width: fit-content;
+  margin: -4px 0 18px;
+}
+
+.dh09-editor-backdrop {
+  position: fixed;
+  z-index: 16000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(8, 16, 13, .68);
+  backdrop-filter: blur(5px);
+}
+
+.dh09-editor-modal {
+  width: min(980px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  border-radius: 28px;
+  padding: 28px;
+  background: #fff;
+  box-shadow: 0 32px 100px rgba(0, 0, 0, .32);
+}
+
+.dh09-editor-title,
+.dh09-editor-row-heading,
+.dh09-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dh09-editor-title span {
+  color: #35633f;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.dh09-editor-title h2 {
+  margin: 4px 0 0;
+}
+
+.dh09-editor-title > button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: #eef1ed;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.dh09-editor-list {
+  display: grid;
+  gap: 14px;
+  margin: 22px 0 14px;
+}
+
+.dh09-editor-row {
+  border: 1px solid #d9e3d8;
+  border-radius: 18px;
+  padding: 16px;
+  background: #fbfcfa;
+}
+
+.dh09-editor-row-heading button {
+  border: 1px solid #cfd9ce;
+  border-radius: 10px;
+  padding: 6px 9px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.dh09-instruction {
+  width: 100%;
+  margin: 12px 0;
+  border: 1px solid #cfd9ce;
+  border-radius: 13px;
+  padding: 12px;
+  font: inherit;
+}
+
+.dh09-ingredient-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dh09-ingredient-chip {
+  cursor: pointer;
+}
+
+.dh09-ingredient-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dh09-ingredient-chip span {
+  display: inline-block;
+  border: 1px solid #cfd9ce;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #fff;
+  color: #425047;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.dh09-ingredient-chip input:checked + span {
+  border-color: #35633f;
+  background: #dfead9;
+  color: #173d23;
+}
+
+.dh09-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: #56645a;
+  font-weight: 700;
+}
+
+.dh09-timer input {
+  width: 110px;
+  border: 1px solid #cfd9ce;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.dh09-add-step {
+  border: 1px solid #35633f;
+  border-radius: 999px;
+  padding: 10px 15px;
+  background: #fff;
+  color: #35633f;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dh09-editor-error {
+  margin-top: 14px;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fdeaea;
+  color: #9c2020;
+}
+
+.dh09-editor-actions {
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.dh09-editor-actions button {
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .dh09-editor-modal {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .dh09-editor-title {
+    align-items: flex-start;
+  }
+
+  .dh09-editor-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .dh09-editor-actions button {
+    width: 100%;
+  }
+}
