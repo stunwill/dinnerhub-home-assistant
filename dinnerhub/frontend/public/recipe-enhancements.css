@@ -31,6 +31,19 @@
   margin: 0 0 18px;
 }
 
+/* Keep category suggestions out of the way until the category input is active.
+   Selecting a suggestion moves focus away from the input, which closes the list
+   immediately and reveals the fields below it. */
+.token-field:not(:has(input:focus)) .suggestions {
+  display: none !important;
+}
+
+@supports not selector(:has(*)) {
+  .token-field:not(:focus-within) .suggestions {
+    display: none !important;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .recipe-card-edit {
     background: rgba(22, 32, 25, 0.94);
