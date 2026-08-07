@@ -1,5 +1,5 @@
 ARG BUILD_ARCH=aarch64
-ARG BUILD_VERSION=0.6.0
+ARG BUILD_VERSION=0.6.1
 
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
