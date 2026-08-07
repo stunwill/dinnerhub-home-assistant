@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.8.0
+
+### Added
+
+- Added a quantity-aware Cooking View to the recipe detail screen.
+- Added numbered cooking step cards for easier use while preparing a meal.
+- Added automatic ingredient quantity insertion into method steps when the ingredient name appears in the instruction.
+- Added automatic refresh of in-step quantities when recipe servings are increased or decreased.
+- Added guidance explaining that cooking-step quantities come from the structured ingredient list.
+
+### Improved
+
+- Recipe instructions now read more like practical cooking directions, for example `Brown 400 g chicken thigh` and `Add 2 tbsp tomato paste`.
+- Existing saved instructions remain unchanged, so structured ingredient quantities remain the source of truth and serving scaling continues to work.
+- Instructions that already contain an explicit quantity are left unchanged to avoid duplicated amounts.
+- Steps without a recognisable ingredient remain unchanged rather than guessing an amount.
+
 ## 0.7.0
 
 ### Added
