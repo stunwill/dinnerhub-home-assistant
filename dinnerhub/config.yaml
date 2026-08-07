@@ -1,5 +1,5 @@
 name: DinnerHub
-version: "0.9.0"
+version: "0.10.0"
 slug: dinnerhub
 description: A self-hosted meal planner, recipe manager and shopping list app for Home Assistant.
 url: https://github.com/stunwill/dinnerhub-home-assistant
