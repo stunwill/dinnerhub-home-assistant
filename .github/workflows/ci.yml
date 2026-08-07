@@ -57,6 +57,7 @@ jobs:
       - run: node --check public/dinnerhub-v070.js
       - run: node --check public/dinnerhub-v080.js
       - run: node --check public/dinnerhub-v090.js
+      - run: node --check public/dinnerhub-v010.js
       - run: npm run build
 
   validate-app:

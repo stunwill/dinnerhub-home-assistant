@@ -18,11 +18,11 @@ def app_modules(tmp_path_factory: pytest.TempPathFactory):
     os.environ["DINNERHUB_ENFORCE_INGRESS"] = "false"
 
     # Import the complete application only after the test environment is set.
-    # Importing main_v3 earlier would create an engine for /data/dinnerhub,
-    # which is not writable or present on a GitHub Actions runner.
-    from app import database, main_v3
+    # Importing the application earlier would create an engine and extension
+    # storage paths for /data/dinnerhub on the GitHub Actions runner.
+    from app import database, main_v4
 
-    return database, main_v3
+    return database, main_v4
 
 
 @pytest.fixture()
