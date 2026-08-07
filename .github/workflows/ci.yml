@@ -54,6 +54,7 @@ jobs:
       - run: node --check public/menu-planner-extension.js
       - run: node --check public/dashboard-meal-images.js
       - run: node --check public/dinnerhub-v060.js
+      - run: node --check public/dinnerhub-v070.js
       - run: npm run build
 
   validate-app:

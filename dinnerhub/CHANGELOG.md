@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.7.0
+
+### Added
+
+- Added a more complete visual plan builder for 3, 5, 7, 10 and 14 day planning windows.
+- Added open-day cards with recipe images and direct Choose or Change actions.
+- Added one-click assignment of suggested recipes to the next open day.
+- Added searchable recipe discovery inside the planner with favourites and household score filters.
+- Added repeat warnings when a meal has already appeared within the recent planning window.
+- Added a clear-day action so planned meals can be removed directly from the visual planner.
+- Added direct shopping-list generation from the active planning window.
+- Added a faster searchable meal picker showing ratings and recent-use context.
+
+### Improved
+
+- Favourites and higher-rated recipes are prioritised when choosing meals.
+- Planner cards now show meal duration, categories and recipe imagery where available.
+- The planning workflow now keeps meal selection, discovery and shopping-list generation together on one screen.
+- Desktop and mobile planner layouts have been improved for faster household use.
+
 ## 0.6.0
 
 ### Added
