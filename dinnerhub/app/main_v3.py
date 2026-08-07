@@ -6,18 +6,21 @@ from . import main
 from .filter_settings import router as filter_settings_router
 from .main import app
 from .models import Ingredient, RecipeIngredient
+from .ratings import MealRating, router as ratings_router
 from .shopping import router as shopping_router
 
 
 def replace_ingredients_safely(db, meal, items) -> None:  # type: ignore[no-untyped-def]
     """Replace recipe ingredients without colliding with existing link rows.
 
-    SQLAlchemy can otherwise insert replacement rows before deleting the old
-    rows, which violates the recipe ingredient uniqueness constraint and was
-    incorrectly reported to the user as a duplicate meal name.
+    Existing recipes need their old ingredient links deleted and flushed before
+    replacement rows are inserted. New recipes must not be flushed here because
+    create_meal owns the flush and converts duplicate-name integrity errors into
+    a clear HTTP 409 response.
     """
-    meal.ingredients.clear()
-    db.flush()
+    if meal.id is not None:
+        meal.ingredients.clear()
+        db.flush()
 
     for position, item in enumerate(items):
         normalised = " ".join(item.name.lower().split())
@@ -42,6 +45,9 @@ def replace_ingredients_safely(db, meal, items) -> None:  # type: ignore[no-unty
         )
 
 
+# Importing MealRating registers its table with SQLAlchemy before create_all runs.
+_ = MealRating
+
 # The create and update endpoints resolve this helper from the main module at
 # request time, so replacing it here fixes both paths without duplicating the
 # API routes.
@@ -53,6 +59,7 @@ main.replace_ingredients = replace_ingredients_safely
 original_count = len(app.router.routes)
 app.include_router(shopping_router)
 app.include_router(filter_settings_router)
+app.include_router(ratings_router)
 new_routes = app.router.routes[original_count:]
 del app.router.routes[original_count:]
 catch_all_index = max(0, len(app.router.routes) - 1)
