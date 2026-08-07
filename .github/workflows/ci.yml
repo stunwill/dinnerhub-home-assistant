@@ -16,8 +16,8 @@ jobs:
       run:
         working-directory: dinnerhub
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: pip
@@ -29,8 +29,8 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Compile custom integration
@@ -44,10 +44,11 @@ jobs:
       run:
         working-directory: dinnerhub/frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
+          package-manager-cache: false
       - run: npm install --no-audit --no-fund
       - run: npm run lint
       - run: node --check public/menu-planner-extension.js
@@ -58,9 +59,11 @@ jobs:
   validate-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: frenck/action-addon-linter@v2
         with:
           path: ./dinnerhub
       - name: Build amd64 container
-        run: docker build --build-arg BUILD_ARCH=amd64 --build-arg BUILD_VERSION=0.6.1 -t dinnerhub:test ./dinnerhub
+        run: |
+          BUILD_VERSION=$(awk -F'"' '/^version:/ {print $2}' dinnerhub/config.yaml)
+          docker build --build-arg BUILD_ARCH=amd64 --build-arg BUILD_VERSION="$BUILD_VERSION" -t dinnerhub:test ./dinnerhub
