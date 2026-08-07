@@ -1,5 +1,5 @@
 ARG BUILD_ARCH=aarch64
-ARG BUILD_VERSION=0.9.0
+ARG BUILD_VERSION=0.10.0
 
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
@@ -23,6 +23,8 @@ ENV DINNERHUB_VERSION="${BUILD_VERSION}" \
     DINNERHUB_STATIC_DIR="/app/static" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
+
+RUN apk add --no-cache ffmpeg
 
 WORKDIR /app
 COPY requirements.txt ./
