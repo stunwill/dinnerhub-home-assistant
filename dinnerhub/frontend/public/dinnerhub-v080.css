@@ -1,0 +1,82 @@
+.dh-cooking-view {
+  margin-top: 26px;
+}
+
+.dh-cooking-note {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 18px;
+  border: 1px solid #d9e3d8;
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: #f4f8f2;
+  color: #34483a;
+}
+
+.dh-cooking-note strong {
+  color: #1f4a2d;
+}
+
+.dh-cooking-note span {
+  color: #5f6f63;
+  font-size: .92rem;
+}
+
+.dh-cooking-view .instruction-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: dinnerhub-step;
+}
+
+.dh-cooking-view .instruction-list li {
+  position: relative;
+  min-height: 58px;
+  border: 1px solid #e0e6df;
+  border-radius: 16px;
+  padding: 16px 18px 16px 62px;
+  background: #fff;
+  color: #1d2b21;
+  line-height: 1.55;
+  box-shadow: 0 5px 18px rgba(31, 74, 45, .05);
+}
+
+.dh-cooking-view .instruction-list li::before {
+  content: attr(data-step-number);
+  position: absolute;
+  left: 16px;
+  top: 13px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #edf3e8;
+  color: #255b35;
+  font-weight: 900;
+}
+
+.dh-cooking-view .instruction-list li.dh-step-has-quantity {
+  border-color: #cbdcc8;
+  background: linear-gradient(135deg, #ffffff, #f8fbf6);
+}
+
+.dh-cooking-legend {
+  display: block;
+  margin-top: 14px;
+  color: #69766c;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  .dh-cooking-view .instruction-list li {
+    padding: 14px 14px 14px 54px;
+  }
+
+  .dh-cooking-view .instruction-list li::before {
+    left: 13px;
+    top: 12px;
+  }
+}
