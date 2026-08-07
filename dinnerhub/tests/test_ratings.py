@@ -1,11 +1,7 @@
-from fastapi.testclient import TestClient
-
-from app.main_v3 import app
-
-client = TestClient(app)
+from __future__ import annotations
 
 
-def _create_meal() -> int:
+def _create_meal(client) -> int:
     response = client.post(
         "/api/meals",
         json={
@@ -35,8 +31,8 @@ def _create_meal() -> int:
     return response.json()["id"]
 
 
-def test_household_ratings_average() -> None:
-    meal_id = _create_meal()
+def test_household_ratings_average(client) -> None:
+    meal_id = _create_meal(client)
 
     for member, score in (("Stu", 8), ("Kristy", 7.5), ("Sienna", 9)):
         response = client.put(
@@ -53,8 +49,8 @@ def test_household_ratings_average() -> None:
     assert payload["count"] == 3
 
 
-def test_rating_can_be_removed_and_unknown_member_rejected() -> None:
-    meal_id = _create_meal()
+def test_rating_can_be_removed_and_unknown_member_rejected(client) -> None:
+    meal_id = _create_meal(client)
     assert client.put(
         f"/api/meals/{meal_id}/ratings",
         json={"member_name": "Stu", "score": 6},
