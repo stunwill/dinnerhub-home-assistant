@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import httpx
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field, HttpUrl
 
 router = APIRouter(prefix="/api/ai", tags=["ai-import"])
@@ -328,9 +328,8 @@ def import_video_url(payload: URLImportInput) -> dict[str, Any]:
                             "or block automated retrieval. Download the video and use Upload video instead."
                         ),
                     )
-                suffix = ".mp4"
                 with tempfile.TemporaryDirectory(prefix="dinnerhub-ai-url-") as temp:
-                    video_path = Path(temp) / f"source{suffix}"
+                    video_path = Path(temp) / "source.mp4"
                     total = 0
                     with video_path.open("wb") as target:
                         for chunk in response.iter_bytes(1024 * 1024):
