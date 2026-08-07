@@ -16,8 +16,13 @@ def app_modules(tmp_path_factory: pytest.TempPathFactory):
     os.environ["DINNERHUB_DATABASE_URL"] = f"sqlite:///{data_dir / 'dinnerhub-test.db'}"
     os.environ["DINNERHUB_DATA_DIR"] = str(data_dir)
     os.environ["DINNERHUB_ENFORCE_INGRESS"] = "false"
-    from app import database, main
-    return database, main
+
+    # Import the complete application only after the test environment is set.
+    # Importing main_v3 earlier would create an engine for /data/dinnerhub,
+    # which is not writable or present on a GitHub Actions runner.
+    from app import database, main_v3
+
+    return database, main_v3
 
 
 @pytest.fixture()
