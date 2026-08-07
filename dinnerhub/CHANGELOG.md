@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.9.0
+
+### Added
+
+- Added persistent structured cooking steps linked explicitly to recipe ingredients.
+- Added a structured-step editor with ingredient chips, step ordering controls and optional timers.
+- Added API endpoints to read and save structured cooking steps.
+- Added server-side rendering of scaled ingredient quantities inside cooking instructions.
+- Added automatic legacy fallback for recipes that have not yet been converted to structured steps.
+- Added an AI recipe import architecture document covering video uploads, supported source URLs, transcription, frame analysis, draft review and image extraction.
+
+### Improved
+
+- Cooking-step quantities no longer depend solely on matching ingredient names in free text.
+- Linked ingredients continue to scale correctly when the serving count changes.
+- Existing recipe instructions remain compatible and can be converted gradually by editing a recipe and selecting **Structure cooking steps**.
+- Structured steps stay synchronised with the existing recipe instruction list for backward compatibility.
+
 ## 0.8.0
 
 ### Added
