@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.10.0
+
+### Added
+
+- Added the new green **DinnerHub by Stu** logo and fork-and-knife emblem based on the supplied brand reference.
+- Added an in-app **AI settings** screen for OpenAI API configuration.
+- Added secure server-side storage of the OpenAI API key with masked browser display.
+- Added configurable OpenAI API base URL, recipe-analysis model and transcription model.
+- Added a **Save & test** connection action for validating the configured API credentials.
+- Added an **Import recipe** workflow for uploaded cooking videos up to 250 MB.
+- Added direct-video-URL import with clear fallback guidance for Instagram and Facebook page links that block automated retrieval.
+- Added FFmpeg-based audio and representative-frame extraction inside the DinnerHub container.
+- Added OpenAI audio transcription and multimodal recipe analysis.
+- Added AI extraction of recipe title, description, categories, cuisine, prep/cook times, servings, difficulty, ingredients, quantities and structured cooking steps.
+- Added selection of a representative food frame as the proposed recipe image.
+- Added a review-first AI draft screen with uncertainty warnings before any recipe is saved.
+- Added creation of structured ingredient-linked cooking steps from an approved AI draft.
+
+### Security and behaviour
+
+- The complete API key is never returned to the frontend after saving.
+- AI-generated recipes are never automatically committed to the recipe library; the user must review and explicitly create the recipe.
+- When a video does not state or visibly support an exact quantity, DinnerHub asks the AI to return an unknown quantity and surface a warning rather than inventing one.
+
 ## 0.9.0
 
 ### Added
