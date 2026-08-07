@@ -13,12 +13,14 @@ from .shopping import router as shopping_router
 def replace_ingredients_safely(db, meal, items) -> None:  # type: ignore[no-untyped-def]
     """Replace recipe ingredients without colliding with existing link rows.
 
-    SQLAlchemy can otherwise insert replacement rows before deleting the old
-    rows, which violates the recipe ingredient uniqueness constraint and was
-    incorrectly reported to the user as a duplicate meal name.
+    Existing recipes need their old ingredient links deleted and flushed before
+    replacement rows are inserted. New recipes must not be flushed here because
+    create_meal owns the flush and converts duplicate-name integrity errors into
+    a clear HTTP 409 response.
     """
-    meal.ingredients.clear()
-    db.flush()
+    if meal.id is not None:
+        meal.ingredients.clear()
+        db.flush()
 
     for position, item in enumerate(items):
         normalised = " ".join(item.name.lower().split())
