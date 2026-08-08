@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.11.0
+
+### Added
+
+- Added **Create recipe with AI** directly inside the Add Recipe modal.
+- Added prompt-based recipe generation for requests such as `I want a recipe for banana bread`.
+- Added starter recipe prompt suggestions for common meal ideas.
+- Added a full on-screen AI recipe preview showing title, timings, servings, categories, ingredients and method before anything is saved.
+- Added conversational recipe refinement so follow-up requests such as `make it less sweet`, `use 3 bananas`, `make it dairy free` or `scale it to 8 serves` regenerate the complete draft while preserving unaffected details.
+- Added structured ingredient links to AI-generated cooking steps so the quantity-aware cooking view continues to work after saving.
+- Added friendly OpenAI credit/quota error handling for prompt-based recipe creation.
+- Added backend tests for the new AI recipe-generation routes.
+
+### Fixed
+
+- Fixed the DinnerHub logo failing to load through Home Assistant Ingress by rendering the branded fork-and-knife logo inline instead of relying on a root-relative image URL.
+
+### Improved
+
+- AI-generated cooking instructions explicitly include ingredient quantities in the method where ingredients are used.
+- AI recipes remain review-first and are only written to the DinnerHub library after selecting **Create this recipe**.
+
+## 0.10.1
+
+### Added
+
+- Added `yt-dlp` social-video extraction for Instagram, Facebook and `fb.watch` recipe links.
+- Added optional Netscape-format social cookies support at `/data/dinnerhub/social-cookies.txt` for posts requiring an authenticated session.
+
+### Improved
+
+- Social post URLs are no longer treated as direct MP4 files.
+- DinnerHub now returns clearer authentication guidance when Meta blocks anonymous video retrieval.
+- Manual video upload remains available as the reliable fallback.
+
 ## 0.10.0
 
 ### Added
