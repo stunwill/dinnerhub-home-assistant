@@ -20,9 +20,9 @@ def app_modules(tmp_path_factory: pytest.TempPathFactory):
     # Import the complete application only after the test environment is set.
     # Importing the application earlier would create an engine and extension
     # storage paths for /data/dinnerhub on the GitHub Actions runner.
-    from app import database, main_v4
+    from app import database, main_v5
 
-    return database, main_v4
+    return database, main_v5
 
 
 @pytest.fixture()
