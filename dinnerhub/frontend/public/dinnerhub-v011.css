@@ -1,0 +1,319 @@
+.dh-inline-logo {
+  display: block;
+  width: min(520px, 100%);
+  height: auto;
+}
+
+.dh-brand {
+  min-width: 260px;
+}
+
+.dh11-ai-builder {
+  border: 1px solid #d8e2d8;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #f3f8f2, #ffffff);
+  margin: 0 0 26px;
+  overflow: hidden;
+}
+
+.dh11-ai-toggle {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 46px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  color: #12351f;
+  padding: 18px 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dh11-ai-toggle:hover {
+  background: #edf6ec;
+}
+
+.dh11-ai-toggle strong,
+.dh11-ai-toggle small {
+  display: block;
+}
+
+.dh11-ai-toggle strong {
+  font-size: 1.05rem;
+  margin-bottom: 3px;
+}
+
+.dh11-ai-toggle small {
+  color: #66736a;
+  font-weight: 500;
+}
+
+.dh11-ai-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0b6b3b, #179557);
+  color: #fff;
+  font-size: 24px;
+}
+
+.dh11-chevron {
+  font-size: 26px;
+  color: #51705d;
+  transition: transform 160ms ease;
+}
+
+.dh11-ai-builder.open .dh11-chevron {
+  transform: rotate(180deg);
+}
+
+.dh11-ai-content {
+  padding: 0 20px 22px;
+  border-top: 1px solid #dfe8df;
+}
+
+.dh11-prompt-label,
+.dh11-refine label {
+  display: block;
+  margin-top: 18px;
+  font-weight: 700;
+  color: #173d25;
+}
+
+.dh11-prompt-label > span,
+.dh11-refine label > span {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.dh11-prompt,
+.dh11-refine-prompt {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid #cfdacf;
+  border-radius: 15px;
+  padding: 14px 16px;
+  background: #fff;
+  color: #14251a;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.dh11-prompt:focus,
+.dh11-refine-prompt:focus {
+  border-color: #137546;
+  outline: 3px solid rgba(19, 117, 70, 0.12);
+}
+
+.dh11-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.dh11-suggestions button,
+.dh11-refine-actions button {
+  border: 1px solid #b9cabd;
+  background: #fff;
+  color: #1f5d38;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dh11-suggestions button:hover,
+.dh11-refine-actions button:hover {
+  background: #edf6ec;
+}
+
+.dh11-primary-actions,
+.dh11-refine-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.dh11-primary-actions .primary,
+.dh11-refine-actions .primary {
+  background: #137546;
+  color: #fff;
+  border-color: #137546;
+}
+
+.dh11-status {
+  margin-top: 15px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #edf5ed;
+  color: #315d40;
+}
+
+.dh11-status.error {
+  background: #fceaea;
+  color: #a32929;
+}
+
+.dh11-conversation {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.dh11-message {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.94rem;
+}
+
+.dh11-user {
+  background: #f3f3f0;
+}
+
+.dh11-assistant {
+  background: #eaf5ec;
+}
+
+.dh11-preview {
+  margin-top: 18px;
+}
+
+.dh11-recipe-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  border-top: 1px solid #dce6dc;
+  padding-top: 20px;
+}
+
+.dh11-kicker {
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  color: #237649;
+}
+
+.dh11-recipe-heading h3 {
+  margin: 4px 0 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  color: #12291a;
+}
+
+.dh11-meta,
+.dh11-tags {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.dh11-meta span,
+.dh11-tags span,
+.dh11-timer {
+  background: #e8f1e5;
+  color: #41664c;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dh11-description {
+  color: #52635a;
+  line-height: 1.55;
+  margin: 12px 0;
+}
+
+.dh11-tags {
+  margin-bottom: 16px;
+}
+
+.dh11-recipe-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 24px;
+}
+
+.dh11-recipe-grid section {
+  background: #fff;
+  border: 1px solid #dce5dc;
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.dh11-recipe-grid h4 {
+  margin: 0 0 10px;
+  color: #183b25;
+  font-size: 1.05rem;
+}
+
+.dh11-recipe-grid ul,
+.dh11-recipe-grid ol {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 9px;
+  line-height: 1.45;
+}
+
+.dh11-warning {
+  background: #fff5d8;
+  color: #755314;
+  padding: 12px 14px;
+  border-radius: 13px;
+  margin: 12px 0 16px;
+}
+
+.dh11-warning ul {
+  margin: 7px 0 0;
+}
+
+.dh11-refine {
+  margin-top: 18px;
+  border-top: 1px solid #dce6dc;
+  padding-top: 2px;
+}
+
+.dh11-ai-builder.dh11-busy {
+  opacity: 0.86;
+}
+
+.dh11-ai-builder button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+@media (max-width: 800px) {
+  .dh-inline-logo {
+    width: min(360px, 100%);
+  }
+
+  .dh11-recipe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dh11-recipe-heading {
+    display: block;
+  }
+
+  .dh11-meta {
+    margin-top: 10px;
+  }
+
+  .dh11-message {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+}
