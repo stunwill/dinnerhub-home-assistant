@@ -1,5 +1,5 @@
 ARG BUILD_ARCH=aarch64
-ARG BUILD_VERSION=0.10.0
+ARG BUILD_VERSION=0.10.1
 
 FROM node:22-alpine AS frontend
 WORKDIR /frontend
@@ -24,7 +24,8 @@ ENV DINNERHUB_VERSION="${BUILD_VERSION}" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg \
+    && pip install --no-cache-dir yt-dlp
 
 WORKDIR /app
 COPY requirements.txt ./

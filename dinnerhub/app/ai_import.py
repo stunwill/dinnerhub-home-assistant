@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import Annotated, Any
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/api/ai", tags=["ai-import"])
 
 DATA_DIR = Path(os.getenv("DINNERHUB_DATA_DIR", "/data/dinnerhub"))
 SETTINGS_FILE = DATA_DIR / "ai-settings.json"
+SOCIAL_COOKIE_FILE = DATA_DIR / "social-cookies.txt"
 MAX_VIDEO_BYTES = 250 * 1024 * 1024
 DEFAULTS = {
     "provider": "openai",
@@ -59,6 +61,7 @@ def _masked_settings() -> dict[str, Any]:
         "api_base_url": values["api_base_url"],
         "analysis_model": values["analysis_model"],
         "transcription_model": values["transcription_model"],
+        "social_cookies_configured": SOCIAL_COOKIE_FILE.exists() and SOCIAL_COOKIE_FILE.stat().st_size > 0,
     }
 
 
@@ -300,6 +303,54 @@ def _process_video(video_path: Path) -> dict[str, Any]:
         return _analyse(transcript, frames)
 
 
+def _social_host(url: str) -> bool:
+    hostname = (urlparse(url).hostname or "").lower()
+    return any(hostname == domain or hostname.endswith(f".{domain}") for domain in ("instagram.com", "facebook.com", "fb.watch"))
+
+
+def _download_with_ytdlp(url: str, workspace: Path) -> Path:
+    if not shutil.which("yt-dlp"):
+        raise HTTPException(status_code=500, detail="yt-dlp is not available in the DinnerHub container.")
+
+    output_template = str(workspace / "source.%(ext)s")
+    command = [
+        "yt-dlp",
+        "--no-playlist",
+        "--no-warnings",
+        "--max-filesize",
+        "250M",
+        "--merge-output-format",
+        "mp4",
+        "-o",
+        output_template,
+    ]
+    if SOCIAL_COOKIE_FILE.exists() and SOCIAL_COOKIE_FILE.stat().st_size > 0:
+        command.extend(["--cookies", str(SOCIAL_COOKIE_FILE)])
+    command.append(url)
+
+    try:
+        completed = subprocess.run(command, check=True, capture_output=True, timeout=180)
+    except subprocess.CalledProcessError as exc:
+        error = exc.stderr.decode("utf-8", errors="replace").strip()[-1500:]
+        auth_hint = (
+            " Instagram/Facebook blocked anonymous retrieval. Configure social cookies in DinnerHub or download the video and upload it."
+            if _social_host(url)
+            else ""
+        )
+        raise HTTPException(status_code=422, detail=f"Could not retrieve this social video with yt-dlp. {error}{auth_hint}") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(status_code=422, detail="Social video retrieval timed out.") from exc
+
+    candidates = [path for path in workspace.glob("source.*") if path.is_file() and path.stat().st_size > 0]
+    if not candidates:
+        stdout = completed.stdout.decode("utf-8", errors="replace")[-800:]
+        raise HTTPException(status_code=422, detail=f"yt-dlp completed but no video file was produced. {stdout}")
+    video = max(candidates, key=lambda path: path.stat().st_size)
+    if video.stat().st_size > MAX_VIDEO_BYTES:
+        raise HTTPException(status_code=413, detail="Remote video exceeds the 250 MB DinnerHub import limit.")
+    return video
+
+
 @router.post("/import/video")
 def import_video(file: Annotated[UploadFile, File(...)]) -> dict[str, Any]:
     content_type = (file.content_type or "").lower()
@@ -315,6 +366,15 @@ def import_video(file: Annotated[UploadFile, File(...)]) -> dict[str, Any]:
 @router.post("/import/url")
 def import_video_url(payload: URLImportInput) -> dict[str, Any]:
     url = str(payload.url)
+
+    if _social_host(url):
+        with tempfile.TemporaryDirectory(prefix="dinnerhub-ai-social-") as temp:
+            video_path = _download_with_ytdlp(url, Path(temp))
+            result = _process_video(video_path)
+            result["source_url"] = url
+            result["retrieval_method"] = "yt-dlp"
+            return result
+
     try:
         with httpx.Client(timeout=60, follow_redirects=True) as client:
             with client.stream("GET", url) as response:
@@ -323,10 +383,7 @@ def import_video_url(payload: URLImportInput) -> dict[str, Any]:
                 if "video" not in content_type and "octet-stream" not in content_type:
                     raise HTTPException(
                         status_code=422,
-                        detail=(
-                            "This link did not resolve directly to a video file. Instagram and Facebook page links often require login "
-                            "or block automated retrieval. Download the video and use Upload video instead."
-                        ),
+                        detail="This link did not resolve directly to a video file. Use a direct video URL or upload the video instead.",
                     )
                 with tempfile.TemporaryDirectory(prefix="dinnerhub-ai-url-") as temp:
                     video_path = Path(temp) / "source.mp4"
@@ -339,6 +396,7 @@ def import_video_url(payload: URLImportInput) -> dict[str, Any]:
                             target.write(chunk)
                     result = _process_video(video_path)
                     result["source_url"] = url
+                    result["retrieval_method"] = "direct"
                     return result
     except HTTPException:
         raise
