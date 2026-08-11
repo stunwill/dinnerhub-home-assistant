@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.12.0
+
+### Added
+
+- Added **Improve with AI** to existing recipe detail views.
+- Added conversational AI refinement for existing recipes using the same structured recipe schema as AI-created recipes.
+- Added quick AI improvement prompts for faster, healthier, cheaper, kid-friendly, simpler and more flavourful recipe variations.
+- Added a side-by-side comparison between the current saved recipe and the proposed AI version.
+- Added a concise change summary covering serving, timing, ingredient, category, cuisine, difficulty and method changes.
+- Added an explicit choice to update the existing recipe or save the AI result as a separate recipe variation.
+- Added iterative follow-up prompts so an AI revision can be refined repeatedly before anything is saved.
+
+### Improved
+
+- Updating an existing recipe keeps its recipe ID, favourites, household scores and meal-plan history attached to the same recipe.
+- Saving an AI result as a variation leaves the original recipe untouched and starts the new recipe without inherited ratings or favourite status.
+- Existing recipe images, source URLs, dietary tags, allergens and substitutions are preserved when AI improvements are applied.
+- AI changes remain review-first and do not modify DinnerHub data until the user explicitly chooses a save action.
+- Added CI syntax validation for the DinnerHub 0.12 frontend extension.
+
 ## 0.11.0
 
 ### Added
