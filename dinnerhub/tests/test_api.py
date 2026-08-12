@@ -24,7 +24,7 @@ def sample_meal() -> dict:
 def test_health(client):
     response = client.get("/api/health")
     assert response.status_code == 200
-    assert response.json()["service"] == "DinnerHub"
+    assert response.json()["service"] == "FoodHub"
 
 
 def test_create_search_and_plan_meal(client):
