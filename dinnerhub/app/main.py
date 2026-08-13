@@ -31,8 +31,8 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="DinnerHub API",
-    description="Local meal planning and recipe management for Home Assistant.",
+    title="FoodHub API",
+    description="Local household food, recipe, dinner planning and shopping-list management for Home Assistant.",
     version=APP_VERSION,
     lifespan=lifespan,
 )
@@ -47,7 +47,7 @@ async def restrict_direct_access(request: Request, call_next):  # type: ignore[n
     allowed = {"172.30.32.2", "127.0.0.1", "::1", "testclient"}
     client_host = request.client.host if request.client else "unknown"
     if enforce and client_host not in allowed:
-        return Response(status_code=403, content="DinnerHub is available through Home Assistant Ingress only")
+        return Response(status_code=403, content="FoodHub is available through Home Assistant Ingress only")
     return await call_next(request)
 
 
@@ -208,7 +208,7 @@ def replace_ingredients(db: Session, meal: Meal, items) -> None:  # type: ignore
 def health() -> dict:
     return {
         "status": "ok",
-        "service": "DinnerHub",
+        "service": "FoodHub",
         "version": APP_VERSION,
         "database": "ready" if DATABASE_PATH.exists() else "initialising",
     }
@@ -222,7 +222,55 @@ def readiness(db: DbSession) -> dict:
 
 @app.get("/api/version")
 def version() -> dict:
-    return {"name": "DinnerHub", "version": APP_VERSION, "slug": "dinnerhub"}
+    return {
+        "name": "FoodHub",
+        "version": APP_VERSION,
+        "slug": "dinnerhub",
+        "legacy_name": "DinnerHub",
+        "compatibility": "legacy technical identifiers retained",
+    }
+
+
+@app.get("/api/v1/capabilities")
+def v1_capabilities() -> dict:
+    return {
+        "service": "FoodHub",
+        "api_version": "v1",
+        "application_version": APP_VERSION,
+        "technical_slug": "dinnerhub",
+        "capabilities": {
+            "connectivity": True,
+            "scheduled_dinners": True,
+            "recipe_catalogue": True,
+            "recipe_nutrition": False,
+            "shopping_list_handoff": False,
+            "events": False,
+        },
+        "nutrition": {
+            "available": False,
+            "authoritative": False,
+            "reason": "FoodHub does not yet store validated recipe nutrition in the v1 contract.",
+        },
+    }
+
+
+@app.get("/api/v1/recipes/{meal_id}/summary")
+def v1_recipe_summary(meal_id: int, db: DbSession) -> dict:
+    meal = get_meal_or_404(db, meal_id)
+    return {
+        "id": str(meal.id),
+        "name": meal.name,
+        "image_ref": meal.image_url,
+        "serving_count": meal.servings,
+        "active": meal.active,
+        "updated_at": meal.updated_at,
+        "nutrition": {
+            "available": False,
+            "authoritative": False,
+            "completeness": "unavailable",
+            "reason": "Validated recipe nutrition has not been implemented in FoodHub yet.",
+        },
+    }
 
 
 @app.get("/api/settings")
@@ -371,7 +419,7 @@ def restore_meal(meal_id: int, db: DbSession) -> dict:
     db.add(
         AuditEvent(
             actor_id="system",
-            actor_name="DinnerHub",
+            actor_name="FoodHub",
             action="recipe_restored",
             entity_type="meal",
             entity_id=str(meal.id),
@@ -466,7 +514,7 @@ def delete_plan_entry(meal_date: date, db: DbSession) -> Response:
     record_audit(
         db,
         actor_id="local-user",
-        actor_name="DinnerHub user",
+        actor_name="FoodHub user",
         action="meal_removed",
         entity_type="meal_plan_entry",
         entity_id=entry.id,
@@ -492,7 +540,7 @@ def complete_plan_entry(meal_date: date, db: DbSession) -> dict:
     record_audit(
         db,
         actor_id="local-user",
-        actor_name="DinnerHub user",
+        actor_name="FoodHub user",
         action="meal_marked_completed",
         entity_type="meal_plan_entry",
         entity_id=entry.id,
@@ -575,7 +623,7 @@ def calendar_events(
             "start": entry["meal_date"].isoformat(),
             "end": (entry["meal_date"] + timedelta(days=1)).isoformat(),
             "all_day": True,
-            "description": f"DinnerHub: {entry['entry_type']}",
+            "description": f"FoodHub: {entry['entry_type']}",
             "uid": f"dinnerhub-{entry['id']}@home-assistant",
         }
         for entry in get_meal_plan(db=db, start=start or date.today(), days=days)
@@ -611,4 +659,4 @@ def frontend(full_path: str):  # type: ignore[no-untyped-def]
     index = STATIC_DIR / "index.html"
     if index.exists():
         return FileResponse(index)
-    raise HTTPException(status_code=404, detail="DinnerHub frontend has not been built")
+    raise HTTPException(status_code=404, detail="FoodHub frontend has not been built")
