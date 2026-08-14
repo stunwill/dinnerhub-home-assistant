@@ -21,6 +21,32 @@
 - Existing `sensor.dinnerhub_*` entity identifiers and calendar UID prefixes remain unchanged.
 - The GitHub repository remains `stunwill/dinnerhub-home-assistant`.
 
+## 0.13.0
+
+### Fixed
+
+- Fixed the Add Recipe modal becoming trapped or effectively frozen in the Home Assistant iOS WebView after scrolling, opening the keyboard or returning to the app.
+- Removed nested mobile scrolling by making the full-screen modal backdrop the single vertical scroll container on phones and tablets.
+- Added Visual Viewport tracking so the modal follows the usable iPhone viewport while the software keyboard opens and closes.
+- Added defensive recovery of stale page scroll-lock styles after a modal closes or the Home Assistant app resumes.
+- Prevented iOS input zoom by ensuring recipe form controls use a 16px minimum font size on mobile.
+- Improved file-input sizing so the meal-image control cannot force the recipe modal wider than the phone viewport.
+
+### Added
+
+- Added automatic local draft protection while creating a new recipe.
+- Added an **Unfinished recipe found** recovery prompt when a previously interrupted Add Recipe session exists.
+- Added Restore and Discard actions for recovered drafts.
+- Added automatic restoration of standard recipe fields, categories and ingredient rows.
+- Added a small draft-save status beside the recipe form actions.
+
+### Improved
+
+- Recipe modal headings remain visible while scrolling on mobile.
+- Save and Cancel controls remain reachable through a sticky mobile action bar with iPhone safe-area spacing.
+- Focused fields automatically scroll back into view when the iPhone keyboard obscures them.
+- Draft data is cleared only after a successful recipe form close following submission, while interrupted sessions remain recoverable.
+
 ## 0.12.0
 
 ### Added
