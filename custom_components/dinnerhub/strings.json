@@ -2,18 +2,18 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connect to DinnerHub",
-        "description": "Connect Home Assistant to the local DinnerHub app.",
+        "title": "Connect to FoodHub",
+        "description": "Connect Home Assistant to the local FoodHub app.",
         "data": {
-          "host": "DinnerHub API address"
+          "host": "FoodHub API address"
         }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to DinnerHub"
+      "cannot_connect": "Unable to connect to FoodHub"
     },
     "abort": {
-      "already_configured": "This DinnerHub instance is already configured"
+      "already_configured": "This FoodHub instance is already configured"
     }
   },
   "entity": {
