@@ -4,10 +4,10 @@ set -euo pipefail
 DATA_DIR="${DINNERHUB_DATA_DIR:-/data/dinnerhub}"
 mkdir -p "${DATA_DIR}" "${DATA_DIR}/backups" "${DATA_DIR}/uploads"
 
-bashio::log.info "Starting DinnerHub ${DINNERHUB_VERSION:-development}"
+bashio::log.info "Starting FoodHub ${DINNERHUB_VERSION:-development}"
 bashio::log.info "Persistent data directory: ${DATA_DIR}"
 
-exec uvicorn app.main_v5:app \
+exec uvicorn app.main_v6:app \
   --host 0.0.0.0 \
   --port 8099 \
   --proxy-headers \

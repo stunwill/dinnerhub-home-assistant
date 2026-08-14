@@ -1,4 +1,4 @@
-"""Config flow for DinnerHub."""
+"""Config flow for FoodHub using the legacy dinnerhub integration domain."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from .const import DEFAULT_HOST, DOMAIN
 
 
 class DinnerHubConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for DinnerHub."""
+    """Handle a config flow for FoodHub."""
 
     VERSION = 1
 
@@ -31,7 +31,7 @@ class DinnerHubConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(f"dinnerhub-{host}")
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title=str(health.get("service", "DinnerHub")),
+                    title=str(health.get("service", "FoodHub")),
                     data={CONF_HOST: host},
                 )
 

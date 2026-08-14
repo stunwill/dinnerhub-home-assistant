@@ -12,17 +12,16 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="session")
 def app_modules(tmp_path_factory: pytest.TempPathFactory):
-    data_dir = tmp_path_factory.mktemp("dinnerhub")
+    data_dir = tmp_path_factory.mktemp("foodhub")
     os.environ["DINNERHUB_DATABASE_URL"] = f"sqlite:///{data_dir / 'dinnerhub-test.db'}"
     os.environ["DINNERHUB_DATA_DIR"] = str(data_dir)
     os.environ["DINNERHUB_ENFORCE_INGRESS"] = "false"
 
     # Import the complete application only after the test environment is set.
-    # Importing the application earlier would create an engine and extension
-    # storage paths for /data/dinnerhub on the GitHub Actions runner.
-    from app import database, main_v5
+    # Legacy DINNERHUB_* technical identifiers remain intentionally supported.
+    from app import database, main_v6
 
-    return database, main_v5
+    return database, main_v6
 
 
 @pytest.fixture()
