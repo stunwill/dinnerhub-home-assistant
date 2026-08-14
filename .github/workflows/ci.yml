@@ -61,6 +61,7 @@ jobs:
       - run: node --check public/dinnerhub-v011.js
       - run: node --check public/dinnerhub-v012.js
       - run: node --check public/dinnerhub-v013.js
+      - run: node --check public/foodhub-v014.js
       - run: npm run build
 
   validate-app:
