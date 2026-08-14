@@ -3,6 +3,26 @@
   --dh-visual-height: 100dvh;
 }
 
+.dh13-draft-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 72%, var(--card));
+}
+
+.dh13-draft-banner > div:first-child { display: grid; gap: 3px; }
+.dh13-draft-banner strong { color: var(--green-dark); }
+.dh13-draft-banner span { color: var(--muted); font-size: .85rem; }
+.dh13-draft-banner > div:last-child { display: flex; gap: 8px; }
+.dh13-draft-banner button { padding: 8px 12px; border-radius: 999px; }
+.dh13-discard { border: 0; background: transparent; color: var(--muted); }
+.dh13-draft-saved { margin-right: auto; color: var(--muted); font-size: .78rem; align-self: center; }
+
 @media (max-width: 800px) {
   /*
    * iOS/WebView reliability: make the full-screen backdrop the only vertical
@@ -64,15 +84,12 @@
   .recipe-form-modal input,
   .recipe-form-modal textarea,
   .recipe-form-modal select {
-    /* 16px prevents iOS from zooming the WebView when a field receives focus. */
     font-size: 16px !important;
     scroll-margin-top: 86px;
     scroll-margin-bottom: 120px;
   }
 
-  .recipe-form-modal textarea {
-    min-height: 110px;
-  }
+  .recipe-form-modal textarea { min-height: 110px; }
 
   .image-upload input[type="file"] {
     width: 100%;
@@ -92,14 +109,16 @@
 }
 
 @media (max-width: 560px) {
+  .dh13-draft-banner { align-items: stretch; flex-direction: column; }
+  .dh13-draft-banner > div:last-child { width: 100%; }
+  .dh13-draft-banner button { flex: 1; min-height: 44px; }
+
   .recipe-form-modal .modal-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
 
-  .recipe-form-modal .modal-actions button {
-    width: 100%;
-    min-height: 48px;
-  }
+  .recipe-form-modal .modal-actions .dh13-draft-saved { grid-column: 1 / -1; }
+  .recipe-form-modal .modal-actions button { width: 100%; min-height: 48px; }
 }
