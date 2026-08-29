@@ -2,15 +2,17 @@
 
 **Plan food. Share dinner. Shop smarter.**
 
-FoodHub is the new user-facing name for the existing DinnerHub Home Assistant application. It remains a self-hosted household meal planner, recipe manager and shopping-list app designed for Home Assistant OS, Home Assistant Ingress and persistent local storage on devices such as a Raspberry Pi 5.
+FoodHub is the user-facing name for the existing DinnerHub Home Assistant application. It remains a self-hosted household meal planner, recipe manager and shopping-list app designed for Home Assistant OS, Home Assistant Ingress and persistent local storage.
 
 ## Compatibility note
 
-This release deliberately retains the legacy technical identifier `dinnerhub` for the add-on slug, repository name, persistent `/data/dinnerhub` storage path, Home Assistant entity IDs and other installed-system references. This preserves existing installations and data while the product branding moves to FoodHub. Do not rename these technical identifiers without a documented migration and backup/restore plan.
+The legacy technical identifier `dinnerhub` is intentionally retained for the add-on slug, repository name, persistent `/data/dinnerhub` storage path, Home Assistant entity IDs and other installed-system references. This preserves existing installations and data while the product branding uses FoodHub. Do not rename these technical identifiers without a documented migration and backup/restore plan.
 
 ## Current status
 
-This repository contains the FoodHub development foundation:
+The current delivered application version is **0.14.0**.
+
+This repository contains:
 
 - Home Assistant app packaging and Ingress support
 - Responsive React and TypeScript interface
@@ -19,13 +21,27 @@ This repository contains the FoodHub development foundation:
 - Meal and structured ingredient management
 - Seven-day and fourteen-day dinner planning
 - Today and tomorrow dashboard summaries
-- Audit events for important changes
+- Shopping-list functionality
+- AI-assisted recipe capture and improvement workflows
+- Recipe nutrition and HealthHub integration contracts
 - Health, readiness and version endpoints
-- Initial Home Assistant REST and calendar payloads
-- Versioned FoodHub v1 capability and recipe-summary contract for HealthHub
+- Native Home Assistant integration support
 - CI and release workflow foundations
 
-FoodHub does not yet publish authoritative recipe nutrition. The v1 contract reports nutrition availability explicitly so HealthHub never treats missing nutrition as zero calories.
+## DevHub metadata
+
+DevHub-compatible repository metadata is maintained in these locations:
+
+- `ROADMAP.md` is the canonical repository roadmap and current/next phase source.
+- `CHANGELOG.md` is the canonical root release-history source for repository discovery.
+- `dinnerhub/CHANGELOG.md` contains concise Home Assistant app-facing release notes and preserved detailed historical notes.
+- `dinnerhub/config.yaml` is the authoritative Home Assistant app version source.
+- `dinnerhub/frontend/package.json` carries the same application version for frontend discovery.
+- `dinnerhub/app/main.py` exposes the same version through `/api/health`, `/api/ready` and `/api/version` when no container build version overrides it.
+- `dinnerhub/Dockerfile` receives the same version through the Home Assistant build argument.
+- GitHub tags/releases, when published, should use the same semantic version.
+
+CI checks these metadata files and version sources for consistency so future releases do not silently drift.
 
 ## Install in Home Assistant
 
@@ -42,6 +58,8 @@ See [`dinnerhub/DOCS.md`](dinnerhub/DOCS.md) for full instructions and [`docs/fo
 ```text
 .
 ├── .github/workflows/
+├── CHANGELOG.md
+├── ROADMAP.md
 ├── dinnerhub/              # legacy technical directory retained for compatibility
 │   ├── app/
 │   ├── frontend/

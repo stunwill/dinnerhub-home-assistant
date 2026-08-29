@@ -10,6 +10,67 @@ permissions:
   contents: read
 
 jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate DevHub metadata and version consistency
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          required = [
+              Path("ROADMAP.md"),
+              Path("CHANGELOG.md"),
+              Path("dinnerhub/CHANGELOG.md"),
+              Path("dinnerhub/config.yaml"),
+              Path("dinnerhub/frontend/package.json"),
+              Path("dinnerhub/app/main.py"),
+              Path("dinnerhub/Dockerfile"),
+          ]
+          missing = [str(path) for path in required if not path.is_file()]
+          if missing:
+              raise SystemExit(f"Missing DevHub metadata/version files: {', '.join(missing)}")
+
+          roadmap = Path("ROADMAP.md").read_text(encoding="utf-8")
+          if "# FoodHub Roadmap" not in roadmap or "Status:" not in roadmap:
+              raise SystemExit("ROADMAP.md is not in the expected DevHub-friendly format")
+
+          config = Path("dinnerhub/config.yaml").read_text(encoding="utf-8")
+          match = re.search(r'^version:\s*["\']?([^"\'\s]+)', config, re.MULTILINE)
+          if not match:
+              raise SystemExit("Unable to detect version from dinnerhub/config.yaml")
+          version = match.group(1)
+
+          package_version = json.loads(Path("dinnerhub/frontend/package.json").read_text(encoding="utf-8"))["version"]
+          if package_version != version:
+              raise SystemExit(f"Frontend version {package_version} does not match app version {version}")
+
+          main_py = Path("dinnerhub/app/main.py").read_text(encoding="utf-8")
+          if f'APP_VERSION = os.getenv("DINNERHUB_VERSION", "{version}")' not in main_py:
+              raise SystemExit("Backend fallback APP_VERSION does not match app version")
+          if '"version": APP_VERSION' not in main_py or '@app.get("/api/health")' not in main_py:
+              raise SystemExit("/api/health does not expose APP_VERSION")
+
+          dockerfile = Path("dinnerhub/Dockerfile").read_text(encoding="utf-8")
+          if f"ARG BUILD_VERSION={version}" not in dockerfile:
+              raise SystemExit("Dockerfile default BUILD_VERSION does not match app version")
+
+          root_changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          ha_changelog = Path("dinnerhub/CHANGELOG.md").read_text(encoding="utf-8")
+          if f"## {version}" not in root_changelog:
+              raise SystemExit("Root CHANGELOG.md does not contain the current app version")
+          if version not in ha_changelog:
+              raise SystemExit("Home Assistant changelog does not reference the current app version")
+
+          print(f"DevHub metadata valid for FoodHub {version}")
+          PY
+
   backend:
     runs-on: ubuntu-latest
     defaults:
