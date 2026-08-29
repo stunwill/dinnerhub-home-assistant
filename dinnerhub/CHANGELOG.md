@@ -1,22 +1,21 @@
 # Changelog
 
-## Unreleased - FoodHub compatibility foundation
+## 0.14.0
 
 ### Added
 
-- Added the versioned `/api/v1/capabilities` integration endpoint for HealthHub connectivity and capability negotiation.
-- Added the read-only `/api/v1/recipes/{meal_id}/summary` endpoint for stable recipe identity, serving count, image reference, archive state and revision timestamp.
-- Added explicit nutrition availability metadata so incomplete FoodHub nutrition is never represented as zero calories.
+- Added authoritative per-serving recipe nutrition storage with calories, protein, carbohydrate, fat, saturated fat, sugar, fibre and sodium.
+- Added versioned FoodHub capability, recipe nutrition and scheduled-dinner API support for HealthHub integration.
+- Added a recipe nutrition editor in the FoodHub interface.
 - Added the FoodHub / HealthHub v1 integration contract documentation.
 
 ### Changed
 
-- Changed user-facing add-on branding from DinnerHub to FoodHub while retaining the legacy `dinnerhub` add-on slug, repository name, storage path and existing Home Assistant identifiers for compatibility.
-- Updated API and ingress messages to use the FoodHub brand.
+- Completed user-facing branding from DinnerHub to FoodHub while retaining the legacy `dinnerhub` add-on slug, repository name, storage path and existing Home Assistant identifiers for compatibility.
+- Updated API, ingress and Home Assistant-facing branding to use FoodHub.
 
 ### Compatibility
 
-- No database migration is performed by this change.
 - Existing data remains under `/data/dinnerhub/dinnerhub.db`.
 - Existing `sensor.dinnerhub_*` entity identifiers and calendar UID prefixes remain unchanged.
 - The GitHub repository remains `stunwill/dinnerhub-home-assistant`.
