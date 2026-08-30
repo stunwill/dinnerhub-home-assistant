@@ -10,7 +10,7 @@ The legacy technical identifier `dinnerhub` is intentionally retained for the ad
 
 ## Current status
 
-The current corrective application version is **0.14.1**.
+The current corrective application version is **0.14.3**.
 
 This repository contains:
 
@@ -30,7 +30,11 @@ This repository contains:
 
 ## Mobile and Home Assistant Ingress
 
-FoodHub is designed to fit the actual Home Assistant Ingress container width rather than assuming a standalone browser viewport. Mobile layouts reflow the FoodHub branding, primary actions, navigation, dashboard cards, Guided Planning and AI dialogs so the application does not require document-level horizontal scrolling. Light and dark modes share the same FoodHub theme variables across the core interface and legacy extension surfaces.
+FoodHub is designed to fit the actual Home Assistant Ingress containing block rather than setting the application width from `100vw` or JavaScript Visual Viewport calculations. Mobile layouts deliberately reflow FoodHub branding, primary actions, navigation, dashboard cards, Guided Planning, Recipe Discovery and AI dialogs so normal screens do not require document-level horizontal scrolling.
+
+FoodHub 0.14.3 adds a rendered Chromium regression test at representative 320–430 px mobile widths. The test checks the real document `scrollWidth`, horizontal position and element bounding boxes after navigation and modal interactions so responsive regressions are detected by CI rather than by CSS-source inspection alone.
+
+Light and dark modes share the same FoodHub theme variables across the core interface and legacy extension surfaces.
 
 ## DevHub metadata
 
