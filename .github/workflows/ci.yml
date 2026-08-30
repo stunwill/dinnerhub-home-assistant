@@ -126,6 +126,17 @@ jobs:
       - run: node --check public/foodhub-v0141.js
       - run: node public/foodhub-v0141-responsive-test.js
       - run: npm run build
+      - name: Install Chromium for rendered mobile regression test
+        run: npx playwright install --with-deps chromium
+      - name: Run rendered mobile layout regression test
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/foodhub-vite.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173 >/dev/null
+          npm run test:mobile-layout
 
   validate-app:
     runs-on: ubuntu-latest
