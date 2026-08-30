@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.14.3
+
+### Fixed
+
+- Removed the 0.14.2 runtime Visual Viewport width-guessing workaround that could still leave Home wider than the visible iPhone WebView while making Guided Planning and Recipe Discovery too narrow.
+- Replaced viewport-calculated page widths with stable containing-block sizing and deliberate mobile reflow rules.
+- Kept FoodHub branding, Add Recipe, Import Recipe, AI Settings, primary navigation and Home cards inside the mobile content width.
+- Restored Guided Planning and Recipe Discovery to the full available content width instead of a collapsed narrow column.
+- Prevented mobile modals, planning controls and legacy extension surfaces from establishing a wider document.
+
+### Improved
+
+- Added a real Chromium mobile-layout regression test covering 320, 360, 375, 390, 393, 414 and 430 px viewport widths.
+- The rendered test now checks document `scrollWidth`, horizontal offset, top-level element bounds, Guided Planning width and Recipe Discovery width after navigation and modal interactions.
+- Removed the 0.14.2 `visualViewport` runtime script from the production page so iOS keyboard and WebView changes no longer recalculate the entire app width.
+
+### Compatibility
+
+- The `dinnerhub` add-on slug, repository name, persistent storage paths and existing Home Assistant identifiers remain unchanged.
+- This corrective release does not migrate or modify recipe, planning, rating or shopping data.
+
 ## 0.14.2
 
 ### Fixed
