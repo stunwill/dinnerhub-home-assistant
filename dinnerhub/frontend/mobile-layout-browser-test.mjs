@@ -3,8 +3,57 @@ import { chromium } from 'playwright';
 const baseUrl = process.env.FOODHUB_TEST_URL || 'http://127.0.0.1:4173';
 const widths = [320, 360, 375, 390, 393, 414, 430];
 
+const dashboardPayload = {
+  version: '0.14.3',
+  today: null,
+  tomorrow: null,
+  upcoming: [],
+  unplanned_days: 7,
+  active_meals: 0,
+};
+
+const respondToApi = async (route) => {
+  const url = new URL(route.request().url());
+  const path = url.pathname.replace(/^\/api\/?/, '');
+
+  if (path.startsWith('dashboard')) {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(dashboardPayload) });
+    return;
+  }
+  if (path.startsWith('meals')) {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    return;
+  }
+  if (path.startsWith('meal-plan')) {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    return;
+  }
+  if (path.startsWith('settings')) {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        planning: { default_days: 7, repeat_warning_days: 14 },
+        household: { default_servings: 4 },
+        features: { shopping_list: true, meal_suggestions: true },
+      }),
+    });
+    return;
+  }
+  if (path.startsWith('version')) {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ name: 'FoodHub', version: '0.14.3', slug: 'dinnerhub' }),
+    });
+    return;
+  }
+
+  await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+};
+
 const assertLayoutFits = async (page, label) => {
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(200);
   const result = await page.evaluate(() => {
     const viewport = document.documentElement.clientWidth;
     const offenders = [];
@@ -45,7 +94,7 @@ const clickIfVisible = async (page, text) => {
   const button = page.getByRole('button', { name: text, exact: true }).first();
   if (await button.count() && await button.isVisible()) {
     await button.evaluate((element) => element.click());
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(150);
     return true;
   }
   return false;
@@ -54,7 +103,7 @@ const clickIfVisible = async (page, text) => {
 const clickLocatorIfPresent = async (locator) => {
   if (await locator.count() && await locator.isVisible()) {
     await locator.evaluate((element) => element.click());
-    await locator.page().waitForTimeout(250);
+    await locator.page().waitForTimeout(150);
     return true;
   }
   return false;
@@ -63,44 +112,55 @@ const clickLocatorIfPresent = async (locator) => {
 const browser = await chromium.launch({ headless: true });
 try {
   for (const width of widths) {
+    console.log(`Testing FoodHub mobile layout at ${width}px`);
     const page = await browser.newPage({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true });
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
-    await assertLayoutFits(page, `${width}px Home`);
+    page.setDefaultTimeout(5000);
+    page.setDefaultNavigationTimeout(10000);
+    await page.route('**/api/**', respondToApi);
 
-    if (await clickIfVisible(page, 'Add recipe')) {
-      await assertLayoutFits(page, `${width}px Add Recipe`);
-      const close = page.locator('.recipe-form-modal .icon-button').first();
-      await clickLocatorIfPresent(close);
-      await assertLayoutFits(page, `${width}px Home after Add Recipe`);
-    }
+    try {
+      await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
+      await page.locator('.app-shell').waitFor({ state: 'visible', timeout: 5000 });
+      await assertLayoutFits(page, `${width}px Home`);
 
-    if (await clickIfVisible(page, 'Meal plan')) {
-      await assertLayoutFits(page, `${width}px Meal Plan`);
-      const guided = page.locator('.dh-plan-builder').first();
-      if (await guided.count() && await guided.isVisible()) {
-        const rect = await guided.boundingBox();
-        const shell = await page.locator('.app-shell').boundingBox();
-        if (rect && shell && rect.width < shell.width * 0.9) {
-          throw new Error(`${width}px Guided Planning collapsed to ${rect.width}px inside ${shell.width}px shell`);
-        }
-        await assertLayoutFits(page, `${width}px Guided Planning`);
+      if (await clickIfVisible(page, 'Add recipe')) {
+        await page.locator('.recipe-form-modal').waitFor({ state: 'visible', timeout: 5000 });
+        await assertLayoutFits(page, `${width}px Add Recipe`);
+        const close = page.locator('.recipe-form-modal .icon-button').first();
+        await clickLocatorIfPresent(close);
+        await assertLayoutFits(page, `${width}px Home after Add Recipe`);
       }
-    }
 
-    if (await clickIfVisible(page, 'Meals')) {
-      await assertLayoutFits(page, `${width}px Meals`);
-      const discovery = page.locator('.planner-filter-panel').first();
-      if (await discovery.count() && await discovery.isVisible()) {
-        const rect = await discovery.boundingBox();
-        const shell = await page.locator('.app-shell').boundingBox();
-        if (rect && shell && rect.width < shell.width * 0.9) {
-          throw new Error(`${width}px Recipe Discovery collapsed to ${rect.width}px inside ${shell.width}px shell`);
+      if (await clickIfVisible(page, 'Meal plan')) {
+        await assertLayoutFits(page, `${width}px Meal Plan`);
+        const guided = page.locator('.dh-plan-builder').first();
+        if (await guided.count() && await guided.isVisible()) {
+          const rect = await guided.boundingBox();
+          const shell = await page.locator('.app-shell').boundingBox();
+          if (rect && shell && rect.width < shell.width * 0.9) {
+            throw new Error(`${width}px Guided Planning collapsed to ${rect.width}px inside ${shell.width}px shell`);
+          }
+          await assertLayoutFits(page, `${width}px Guided Planning`);
         }
-        await assertLayoutFits(page, `${width}px Recipe Discovery`);
       }
-    }
 
-    await page.close();
+      if (await clickIfVisible(page, 'Meals')) {
+        await assertLayoutFits(page, `${width}px Meals`);
+        const discovery = page.locator('.planner-filter-panel').first();
+        if (await discovery.count() && await discovery.isVisible()) {
+          const rect = await discovery.boundingBox();
+          const shell = await page.locator('.app-shell').boundingBox();
+          if (rect && shell && rect.width < shell.width * 0.9) {
+            throw new Error(`${width}px Recipe Discovery collapsed to ${rect.width}px inside ${shell.width}px shell`);
+          }
+          await assertLayoutFits(page, `${width}px Recipe Discovery`);
+        }
+      }
+
+      console.log(`Passed FoodHub mobile layout at ${width}px`);
+    } finally {
+      await page.close();
+    }
   }
   console.log(`FoodHub mobile browser layout passed at ${widths.join(', ')}px.`);
 } finally {
