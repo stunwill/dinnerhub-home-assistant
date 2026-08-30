@@ -1,12 +1,14 @@
 {
   "name": "dinnerhub-frontend",
   "private": true,
-  "version": "0.14.2",
+  "version": "0.14.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "tsc -b --pretty false"
+    "preview": "vite preview",
+    "lint": "tsc -b --pretty false",
+    "test:mobile-layout": "node mobile-layout-browser-test.mjs"
   },
   "dependencies": {
     "@vitejs/plugin-react": "4.6.0",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@types/react": "19.1.9",
-    "@types/react-dom": "19.1.7"
+    "@types/react-dom": "19.1.7",
+    "playwright": "1.55.0"
   }
 }
