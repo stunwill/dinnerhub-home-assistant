@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.14.2
+
+### Fixed
+
+- Released the follow-up iPhone/Home Assistant Ingress width correction as an installable Home Assistant patch version.
+- Constrained FoodHub to the actual usable visual viewport width so the document cannot remain wider than the visible iPhone WebView.
+- Reflowed the mobile header so Add Recipe and Import Recipe fit in two columns with AI Settings on a full-width row underneath.
+- Re-constrained primary navigation, Home cards, Meal Plan, Guided Planning, Shopping, forms and modals after legacy extension injection.
+- Added runtime width re-evaluation for resize, orientation and Visual Viewport changes, including stale horizontal-offset recovery.
+
+### Compatibility
+
+- The `dinnerhub` add-on slug, repository name, persistent storage paths and existing Home Assistant identifiers remain unchanged.
+- This patch does not migrate or modify recipe, planning, rating or shopping data.
+
 ## 0.14.1
 
 ### Fixed
