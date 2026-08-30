@@ -1,5 +1,5 @@
 name: FoodHub
-version: "0.14.1"
+version: "0.14.2"
 slug: dinnerhub
 description: A self-hosted household food, recipe, dinner-planning and shopping-list app for Home Assistant.
 url: https://github.com/stunwill/dinnerhub-home-assistant
