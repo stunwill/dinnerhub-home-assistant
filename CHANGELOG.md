@@ -2,6 +2,19 @@
 
 This root changelog is the canonical DevHub-discoverable release history for FoodHub. The Home Assistant-facing changelog remains at `dinnerhub/CHANGELOG.md`.
 
+## 0.14.1
+
+### Fixed
+- Fixed document-level horizontal scrolling on mobile Home Assistant WebViews by replacing legacy `100vw` shell constraints with container-relative sizing.
+- Reflowed FoodHub branding, Add Recipe, Import Recipe, AI Settings and primary navigation for narrow mobile widths.
+- Constrained Guided Planning, dashboard cards and AI/planning dialogs so they do not expand the document horizontally.
+- Corrected dark-mode styling for Guided Planning and AI import surfaces that previously used hard-coded light backgrounds.
+- Updated remaining user-facing DinnerHub wording in AI import/settings and legacy enhancement UI to FoodHub.
+
+### Compatibility
+- The `dinnerhub` repository name, add-on slug, storage path and established Home Assistant identifiers remain unchanged.
+- No recipe, planning, rating or shopping data migration is required.
+
 ## 0.14.0
 
 ### Added
@@ -43,4 +56,4 @@ Earlier release details remain preserved in `dinnerhub/CHANGELOG.md` and reposit
 
 ## Release publication note
 
-The repository currently has no published GitHub Releases. Version `0.14.0` is established by the merged FoodHub 0.14.0 release work and Home Assistant app metadata. Future published tags/releases should use the same semantic version as the application metadata.
+The repository currently has no published GitHub Releases. Version `0.14.1` is established by the Home Assistant app metadata on this corrective release branch. Future published tags/releases should use the same semantic version as the application metadata.
