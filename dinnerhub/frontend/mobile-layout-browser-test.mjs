@@ -44,8 +44,17 @@ const assertLayoutFits = async (page, label) => {
 const clickIfVisible = async (page, text) => {
   const button = page.getByRole('button', { name: text, exact: true }).first();
   if (await button.count() && await button.isVisible()) {
-    await button.click();
-    await page.waitForTimeout(200);
+    await button.evaluate((element) => element.click());
+    await page.waitForTimeout(250);
+    return true;
+  }
+  return false;
+};
+
+const clickLocatorIfPresent = async (locator) => {
+  if (await locator.count() && await locator.isVisible()) {
+    await locator.evaluate((element) => element.click());
+    await locator.page().waitForTimeout(250);
     return true;
   }
   return false;
@@ -61,7 +70,7 @@ try {
     if (await clickIfVisible(page, 'Add recipe')) {
       await assertLayoutFits(page, `${width}px Add Recipe`);
       const close = page.locator('.recipe-form-modal .icon-button').first();
-      if (await close.count()) await close.click();
+      await clickLocatorIfPresent(close);
       await assertLayoutFits(page, `${width}px Home after Add Recipe`);
     }
 
