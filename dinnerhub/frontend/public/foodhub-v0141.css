@@ -1,0 +1,445 @@
+/* FoodHub 0.14.1: mobile responsive and theme corrective layer */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body,
+#root,
+#root > div,
+.app-shell,
+main {
+  min-width: 0 !important;
+}
+
+.app-shell {
+  width: min(1180px, 100%) !important;
+  max-width: 1180px !important;
+  margin: 0 auto !important;
+}
+
+.app-shell > *,
+main > *,
+.topbar > *,
+.tabs > *,
+.hero-grid > *,
+.meal-grid > *,
+.day-row > *,
+.plan-row > *,
+.dh-plan-builder > *,
+.dh-day-slots > *,
+.dh-suggested-grid > *,
+.dh-ai-modal > *,
+.dh12-modal > * {
+  min-width: 0;
+}
+
+/* Override the older v0.6 100vw-based shell constraints. */
+#root > div,
+main,
+.app-shell,
+.app-container,
+.page-shell {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Header and branding */
+.topbar {
+  width: 100%;
+  min-width: 0;
+}
+
+.dh-brand {
+  width: min(620px, 100%) !important;
+  max-width: 100%;
+  min-width: 0 !important;
+  flex: 1 1 auto;
+}
+
+.dh-logo-image,
+.dh-inline-logo {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.dh-v010-actions {
+  min-width: 0;
+}
+
+/* The app's tab strip should fit the mobile viewport instead of expanding it. */
+.tabs {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.tabs button {
+  min-width: 0;
+}
+
+/* Planning extension must inherit FoodHub surfaces instead of hard-coded light UI. */
+.planner-filter-panel,
+.planner-config-modal,
+.dh-plan-builder,
+.dh-day-slot,
+.dh-suggested-card,
+.dh-rating-modal,
+.dh-picker-modal {
+  background: var(--card) !important;
+  color: inherit !important;
+  border-color: var(--line) !important;
+}
+
+.planner-filter-heading strong,
+.planner-config-titlebar h2,
+.dh-builder-heading h2,
+.dh-suggested-heading h3,
+.dh-day-slot strong,
+.dh-suggested-card strong,
+.dh-modal-heading h2 {
+  color: var(--green-dark) !important;
+}
+
+.planner-filter-heading small,
+.dh-builder-heading p,
+.dh-day-slot span,
+.dh-suggested-card span {
+  color: var(--muted) !important;
+}
+
+.planner-configure-button,
+.planner-add-filter,
+.planner-config-cancel,
+.planner-filter-chip,
+.dh-builder-lengths button,
+.dh-modal-actions button,
+.dh-ai-actions button,
+.dh-ai-source-tabs button,
+.dh12-chatbar button,
+.dh12-save-actions button,
+.dh12-quick button {
+  background: var(--card) !important;
+  color: var(--green) !important;
+  border-color: var(--green) !important;
+}
+
+.planner-config-save,
+.dh-builder-lengths button.active,
+.dh-slot-action,
+.dh-modal-actions .dh-save,
+.dh-ai-actions .primary,
+.dh-ai-source-tabs button.active,
+.dh12-chatbar button.primary,
+.dh12-save-actions button.primary {
+  background: var(--green) !important;
+  color: #fff !important;
+  border-color: var(--green) !important;
+}
+
+.planner-config-row input,
+.planner-config-row select,
+.planner-config-row .filter-label,
+.planner-config-row .filter-value,
+.planner-config-options input[type="number"],
+.dh-picker-search,
+.dh-rating-grid input,
+.dh-ai-field input,
+.dh-ai-field select,
+.dh-ai-field textarea,
+.dh12-chatbar textarea {
+  background: var(--card) !important;
+  color: inherit !important;
+  border-color: var(--line) !important;
+}
+
+.dh-ai-modal,
+.dh12-modal {
+  background: var(--card) !important;
+  color: inherit !important;
+  width: min(980px, 100%) !important;
+  max-width: 100% !important;
+}
+
+.dh-ai-note,
+.dh-ai-status,
+.dh12-status,
+.dh12-change-summary,
+.dh12-message.user,
+.dh12-message.assistant,
+.dh12-draft-card,
+.dh12-awaiting {
+  background: color-mix(in srgb, var(--card) 86%, var(--accent)) !important;
+  color: inherit !important;
+  border-color: var(--line) !important;
+}
+
+.dh-ai-list li,
+.dh11-recipe-grid section,
+.dh12-draft-card,
+.dh12-awaiting {
+  background: var(--card) !important;
+  color: inherit !important;
+  border-color: var(--line) !important;
+}
+
+.dh11-ai-builder,
+.dh11-ai-toggle,
+.dh11-ai-content,
+.dh11-prompt,
+.dh11-refine-prompt,
+.dh11-suggestions button,
+.dh11-refine-actions button {
+  background: var(--card) !important;
+  color: inherit !important;
+  border-color: var(--line) !important;
+}
+
+.dh11-ai-toggle strong,
+.dh11-prompt-label,
+.dh11-refine label,
+.dh11-recipe-heading h3,
+.dh11-recipe-grid h4 {
+  color: var(--green-dark) !important;
+}
+
+.dh11-ai-toggle small,
+.dh11-description {
+  color: var(--muted) !important;
+}
+
+/* Keep modal backdrops constrained to the actual viewport/container. */
+.dh-ai-backdrop,
+.dh12-backdrop,
+.dh-rating-backdrop,
+.dh-picker-backdrop,
+.planner-config-backdrop {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+  .app-shell {
+    padding: 18px 12px 44px !important;
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch !important;
+    gap: 14px;
+  }
+
+  .topbar > div:first-child,
+  .topbar .dh-brand {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .topbar > .primary {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .dh-v010-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 !important;
+    gap: 10px;
+  }
+
+  .dh-v010-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    white-space: normal;
+    padding: 10px 12px;
+  }
+
+  .tabs {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 0 !important;
+    overflow-x: visible !important;
+  }
+
+  .tabs button {
+    width: 100%;
+    padding: 12px 6px;
+    white-space: normal !important;
+    text-align: center;
+    font-size: clamp(.84rem, 3.5vw, 1rem);
+  }
+
+  .hero-grid,
+  .meal-grid,
+  .day-row,
+  .plan-row,
+  .plan-picker-row,
+  .dh-day-slots,
+  .dh-suggested-grid,
+  .dh-ai-grid,
+  .dh-ai-review,
+  .dh12-comparison,
+  .dh11-recipe-grid {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .feature-card,
+  .meal-card,
+  .day-row,
+  .plan-row,
+  .dh-plan-builder,
+  .dh-day-slot,
+  .dh-suggested-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .dh-plan-builder {
+    padding: 16px !important;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .dh-builder-heading,
+  .dh-suggested-heading {
+    align-items: stretch !important;
+  }
+
+  .dh-builder-lengths {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .dh-builder-lengths button {
+    min-width: 0;
+    width: 100%;
+    padding: 9px 8px;
+  }
+
+  .dh-day-slots,
+  .dh-suggested-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dh-ai-backdrop,
+  .dh12-backdrop,
+  .dh-rating-backdrop,
+  .dh-picker-backdrop,
+  .planner-config-backdrop {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .dh-ai-modal,
+  .dh12-modal,
+  .dh-rating-modal,
+  .dh-picker-modal,
+  .planner-config-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 18px 16px !important;
+    border-radius: 18px;
+  }
+
+  .dh-ai-source-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .dh-ai-source-tabs button {
+    min-width: 0;
+    width: 100%;
+    white-space: normal;
+  }
+
+  .dh-ai-actions,
+  .dh12-save-actions,
+  .dh12-save-actions > div {
+    width: 100%;
+  }
+
+  .dh-ai-actions button,
+  .dh12-save-actions button {
+    min-width: 0;
+  }
+
+  .planner-config-row,
+  .planner-config-options,
+  .planner-filter-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .dh-v010-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dh-builder-lengths {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feature-card {
+    padding: 20px !important;
+  }
+
+  .feature-card h2 {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 360px) {
+  .dh-v010-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs button {
+    font-size: .82rem;
+    padding-inline: 4px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .planner-config-close,
+  .dh-ai-close,
+  .dh12-close,
+  .dh-close {
+    background: color-mix(in srgb, var(--card) 74%, var(--accent));
+    color: inherit;
+  }
+
+  .dh-day-image,
+  .dh-suggested-image,
+  .dh-ai-review img {
+    background-color: color-mix(in srgb, var(--card) 72%, var(--accent));
+  }
+}

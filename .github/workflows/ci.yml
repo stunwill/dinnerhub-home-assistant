@@ -123,6 +123,8 @@ jobs:
       - run: node --check public/dinnerhub-v012.js
       - run: node --check public/dinnerhub-v013.js
       - run: node --check public/foodhub-v014.js
+      - run: node --check public/foodhub-v0141.js
+      - run: node public/foodhub-v0141-responsive-test.js
       - run: npm run build
 
   validate-app:

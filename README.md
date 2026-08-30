@@ -10,7 +10,7 @@ The legacy technical identifier `dinnerhub` is intentionally retained for the ad
 
 ## Current status
 
-The current delivered application version is **0.14.0**.
+The current corrective application version is **0.14.1**.
 
 This repository contains:
 
@@ -27,6 +27,10 @@ This repository contains:
 - Health, readiness and version endpoints
 - Native Home Assistant integration support
 - CI and release workflow foundations
+
+## Mobile and Home Assistant Ingress
+
+FoodHub is designed to fit the actual Home Assistant Ingress container width rather than assuming a standalone browser viewport. Mobile layouts reflow the FoodHub branding, primary actions, navigation, dashboard cards, Guided Planning and AI dialogs so the application does not require document-level horizontal scrolling. Light and dark modes share the same FoodHub theme variables across the core interface and legacy extension surfaces.
 
 ## DevHub metadata
 

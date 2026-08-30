@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.14.1
+
+### Fixed
+
+- Fixed document-level horizontal scrolling on mobile by removing legacy `100vw` shell constraints and constraining FoodHub layouts to the actual Home Assistant Ingress container width.
+- Reflowed the mobile header, FoodHub branding, primary actions and navigation so controls remain visible without side-to-side page dragging.
+- Constrained Home dashboard cards, Guided Planning, meal planning, AI dialogs and legacy extension surfaces to the available viewport width.
+- Fixed Guided Planning and AI import surfaces using hard-coded light styling while FoodHub is in dark mode.
+- Updated remaining user-facing legacy DinnerHub text in AI import/settings and legacy enhancement UI to FoodHub while retaining technical compatibility identifiers.
+
+### Improved
+
+- Added a dedicated corrective responsive/theme layer for narrow Home Assistant WebViews, including 320–430 px mobile widths.
+- Improved mobile planning-length controls, modal sizing and AI source tabs so they reflow instead of increasing document width.
+- Reused FoodHub theme variables across legacy planning and AI extension surfaces for consistent dark/light presentation.
+
+### Compatibility
+
+- The `dinnerhub` add-on slug, repository name, persistent storage paths and existing Home Assistant identifiers remain unchanged.
+- This corrective release does not migrate or modify recipe, planning, rating or shopping data.
+
 ## 0.14.0
 
 ### Added
@@ -63,8 +84,8 @@
 - Updating an existing recipe keeps its recipe ID, favourites, household scores and meal-plan history attached to the same recipe.
 - Saving an AI result as a variation leaves the original recipe untouched and starts the new recipe without inherited ratings or favourite status.
 - Existing recipe images, source URLs, dietary tags, allergens and substitutions are preserved when AI improvements are applied.
-- AI changes remain review-first and do not modify DinnerHub data until the user explicitly chooses a save action.
-- Added CI syntax validation for the DinnerHub 0.12 frontend extension.
+- AI changes remain review-first and do not modify legacy data until the user explicitly chooses a save action.
+- Added CI syntax validation for the 0.12 frontend extension.
 
 ## 0.11.0
 
@@ -81,12 +102,12 @@
 
 ### Fixed
 
-- Fixed the DinnerHub logo failing to load through Home Assistant Ingress by rendering the branded fork-and-knife logo inline instead of relying on a root-relative image URL.
+- Fixed the legacy logo failing to load through Home Assistant Ingress by rendering the branded fork-and-knife logo inline instead of relying on a root-relative image URL.
 
 ### Improved
 
 - AI-generated cooking instructions explicitly include ingredient quantities in the method where ingredients are used.
-- AI recipes remain review-first and are only written to the DinnerHub library after selecting **Create this recipe**.
+- AI recipes remain review-first and are only written to the FoodHub library after selecting **Create this recipe**.
 
 ## 0.10.1
 
@@ -98,5 +119,5 @@
 ### Improved
 
 - Social post URLs are no longer treated as direct MP4 files.
-- DinnerHub now returns clearer authentication guidance when Meta blocks anonymous video retrieval.
+- FoodHub now returns clearer authentication guidance when Meta blocks anonymous video retrieval.
 - Manual video upload remains available as the reliable fallback.
