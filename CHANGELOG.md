@@ -2,6 +2,19 @@
 
 This root changelog is the canonical DevHub-discoverable release history for FoodHub. The Home Assistant-facing changelog remains at `dinnerhub/CHANGELOG.md`.
 
+## 0.14.2
+
+### Fixed
+- Released the follow-up iPhone/Home Assistant Ingress width correction as an installable Home Assistant patch version.
+- Constrained FoodHub to the actual usable visual viewport width so the application cannot remain wider than the visible iPhone WebView.
+- Reflowed the mobile header so Add Recipe and Import Recipe fit in two columns with AI Settings on its own full-width row.
+- Re-constrained primary navigation, dashboard cards, meal planning, Guided Planning, Shopping, forms and modals after legacy extension injection.
+- Added runtime re-evaluation for resize, orientation and Visual Viewport changes so stale horizontal offsets are reset.
+
+### Compatibility
+- The `dinnerhub` repository name, add-on slug, storage path and established Home Assistant identifiers remain unchanged.
+- No recipe, planning, rating or shopping data migration is required.
+
 ## 0.14.1
 
 ### Fixed
@@ -56,4 +69,4 @@ Earlier release details remain preserved in `dinnerhub/CHANGELOG.md` and reposit
 
 ## Release publication note
 
-The repository currently has no published GitHub Releases. Version `0.14.1` is established by the Home Assistant app metadata on this corrective release branch. Future published tags/releases should use the same semantic version as the application metadata.
+The repository currently has no published GitHub Releases. Version `0.14.2` is established by the Home Assistant app metadata on this release branch. Future published tags/releases should use the same semantic version as the application metadata.
