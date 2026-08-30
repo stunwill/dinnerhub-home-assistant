@@ -1,0 +1,308 @@
+/* FoodHub 0.14.2: visual-viewport mobile width correction */
+
+:root {
+  --fh-usable-width: 100%;
+}
+
+html.fh-mobile-constrained,
+html.fh-mobile-constrained body,
+html.fh-mobile-constrained #root {
+  width: var(--fh-usable-width) !important;
+  max-width: var(--fh-usable-width) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+html.fh-mobile-constrained body {
+  margin: 0 !important;
+}
+
+html.fh-mobile-constrained #root > div,
+html.fh-mobile-constrained .app-shell,
+html.fh-mobile-constrained main,
+html.fh-mobile-constrained .app-container,
+html.fh-mobile-constrained .page-shell {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+html.fh-mobile-constrained .app-shell {
+  margin-inline: 0 !important;
+  padding: 18px 12px 44px !important;
+}
+
+html.fh-mobile-constrained .app-shell *,
+html.fh-mobile-constrained main *,
+html.fh-mobile-constrained header *,
+html.fh-mobile-constrained nav * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+html.fh-mobile-constrained img,
+html.fh-mobile-constrained svg,
+html.fh-mobile-constrained video,
+html.fh-mobile-constrained canvas {
+  max-width: 100% !important;
+}
+
+/* Mobile header is deliberately reflowed rather than squeezed. */
+html.fh-mobile-constrained .topbar {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+}
+
+html.fh-mobile-constrained .topbar > div:first-child,
+html.fh-mobile-constrained .topbar > .dh-brand {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+html.fh-mobile-constrained .dh-brand {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  flex: none !important;
+}
+
+html.fh-mobile-constrained .dh-logo-image,
+html.fh-mobile-constrained .dh-inline-logo {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+}
+
+html.fh-mobile-constrained .topbar > .primary {
+  grid-column: 1 !important;
+  grid-row: auto !important;
+  width: 100% !important;
+  min-height: 48px;
+  white-space: normal !important;
+}
+
+html.fh-mobile-constrained .dh-v010-actions {
+  display: contents !important;
+}
+
+html.fh-mobile-constrained #dh-ai-import-button {
+  grid-column: 2 !important;
+  width: 100% !important;
+  min-height: 48px;
+  white-space: normal !important;
+  padding: 10px 12px !important;
+}
+
+html.fh-mobile-constrained #dh-ai-settings-button {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  min-height: 48px;
+  white-space: normal !important;
+  padding: 10px 12px !important;
+}
+
+/* Four primary destinations always fit within the actual visual viewport. */
+html.fh-mobile-constrained .tabs {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 0 !important;
+  overflow: visible !important;
+}
+
+html.fh-mobile-constrained .tabs button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 12px 4px !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font-size: clamp(.78rem, 3.6vw, .96rem);
+}
+
+/* Core cards and rows must never establish a wider formatting context. */
+html.fh-mobile-constrained .hero-grid,
+html.fh-mobile-constrained .meal-grid,
+html.fh-mobile-constrained .upcoming-list,
+html.fh-mobile-constrained .planner,
+html.fh-mobile-constrained .day-row,
+html.fh-mobile-constrained .plan-row,
+html.fh-mobile-constrained .plan-picker-row,
+html.fh-mobile-constrained .section-heading,
+html.fh-mobile-constrained .shopping-panel,
+html.fh-mobile-constrained .shopping-toolbar,
+html.fh-mobile-constrained .shopping-add,
+html.fh-mobile-constrained .shopping-groups,
+html.fh-mobile-constrained .shopping-item,
+html.fh-mobile-constrained .dh-plan-builder,
+html.fh-mobile-constrained .dh-builder-heading,
+html.fh-mobile-constrained .dh-day-slots,
+html.fh-mobile-constrained .dh-day-slot,
+html.fh-mobile-constrained .dh-suggested-grid,
+html.fh-mobile-constrained .dh-suggested-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+html.fh-mobile-constrained .hero-grid,
+html.fh-mobile-constrained .meal-grid,
+html.fh-mobile-constrained .dh-day-slots,
+html.fh-mobile-constrained .dh-suggested-grid {
+  grid-template-columns: 1fr !important;
+}
+
+html.fh-mobile-constrained .day-row,
+html.fh-mobile-constrained .plan-row,
+html.fh-mobile-constrained .plan-picker-row {
+  grid-template-columns: 1fr !important;
+}
+
+html.fh-mobile-constrained .feature-card,
+html.fh-mobile-constrained .meal-card,
+html.fh-mobile-constrained .dh-day-slot,
+html.fh-mobile-constrained .dh-suggested-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere;
+}
+
+html.fh-mobile-constrained .feature-card h2,
+html.fh-mobile-constrained .meal-card h3,
+html.fh-mobile-constrained .section-heading h2 {
+  overflow-wrap: anywhere;
+}
+
+/* Guided Planning uses the full usable width without creating a blank canvas. */
+html.fh-mobile-constrained .dh-plan-builder {
+  margin-inline: 0 !important;
+  padding: 16px !important;
+}
+
+html.fh-mobile-constrained .dh-builder-heading,
+html.fh-mobile-constrained .dh-suggested-heading {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  width: 100% !important;
+  gap: 12px !important;
+}
+
+html.fh-mobile-constrained .dh-builder-lengths {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 8px !important;
+}
+
+html.fh-mobile-constrained .dh-builder-lengths button {
+  width: 100% !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+}
+
+/* Shopping controls and legacy forms also participate in page width. */
+html.fh-mobile-constrained .shopping-toolbar,
+html.fh-mobile-constrained .section-heading,
+html.fh-mobile-constrained .plan-picker-toolbar,
+html.fh-mobile-constrained .ingredient-editor-heading {
+  align-items: stretch !important;
+  flex-direction: column !important;
+}
+
+html.fh-mobile-constrained .shopping-add,
+html.fh-mobile-constrained .form-grid,
+html.fh-mobile-constrained .form-grid.three,
+html.fh-mobile-constrained .ingredient-row,
+html.fh-mobile-constrained .meal-card-actions {
+  grid-template-columns: 1fr !important;
+}
+
+html.fh-mobile-constrained .shopping-item {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+}
+
+html.fh-mobile-constrained input,
+html.fh-mobile-constrained textarea,
+html.fh-mobile-constrained select,
+html.fh-mobile-constrained button,
+html.fh-mobile-constrained input[type="file"] {
+  max-width: 100% !important;
+}
+
+/* Dialogs are sized to the same visual viewport measurement as the page. */
+html.fh-mobile-constrained .modal-backdrop,
+html.fh-mobile-constrained .dh-ai-backdrop,
+html.fh-mobile-constrained .dh12-backdrop,
+html.fh-mobile-constrained .dh-rating-backdrop,
+html.fh-mobile-constrained .dh-picker-backdrop,
+html.fh-mobile-constrained .planner-config-backdrop {
+  width: var(--fh-usable-width) !important;
+  max-width: var(--fh-usable-width) !important;
+  padding-inline: 10px !important;
+  box-sizing: border-box !important;
+}
+
+html.fh-mobile-constrained .modal,
+html.fh-mobile-constrained .recipe-form-modal,
+html.fh-mobile-constrained .recipe-detail-modal,
+html.fh-mobile-constrained .plan-picker-modal,
+html.fh-mobile-constrained .dh-ai-modal,
+html.fh-mobile-constrained .dh12-modal,
+html.fh-mobile-constrained .dh-rating-modal,
+html.fh-mobile-constrained .dh-picker-modal,
+html.fh-mobile-constrained .planner-config-modal {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-inline: auto !important;
+}
+
+html.fh-mobile-constrained .dh-ai-grid,
+html.fh-mobile-constrained .dh-ai-review,
+html.fh-mobile-constrained .dh12-comparison,
+html.fh-mobile-constrained .dh11-recipe-grid,
+html.fh-mobile-constrained .planner-config-options {
+  grid-template-columns: 1fr !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+html.fh-mobile-constrained .dh-ai-source-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: 100% !important;
+}
+
+html.fh-mobile-constrained .dh-ai-source-tabs button {
+  width: 100% !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+}
+
+/* Defensive only after the actual layout is constrained above. */
+html.fh-mobile-constrained,
+html.fh-mobile-constrained body {
+  overflow-x: clip;
+}
+
+@media (max-width: 360px) {
+  html.fh-mobile-constrained .app-shell {
+    padding-inline: 9px !important;
+  }
+
+  html.fh-mobile-constrained .tabs button {
+    font-size: .76rem;
+  }
+}
