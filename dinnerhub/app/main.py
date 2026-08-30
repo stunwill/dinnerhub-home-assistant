@@ -18,7 +18,7 @@ from .database import DATABASE_PATH, get_db, initialise_database
 from .models import AuditEvent, Ingredient, Meal, MealPlanEntry, RecipeIngredient
 from .schemas import DashboardOutput, MealCreate, MealOutput, MealUpdate, PlanEntryInput, PlanEntryOutput
 
-APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.14.0")
+APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.14.1")
 STATIC_DIR = Path(os.getenv("DINNERHUB_STATIC_DIR", "/app/static"))
 OPTIONS_FILE = Path("/data/options.json")
 DbSession = Annotated[Session, Depends(get_db)]
