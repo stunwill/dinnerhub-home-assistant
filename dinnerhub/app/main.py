@@ -18,7 +18,7 @@ from .database import DATABASE_PATH, get_db, initialise_database
 from .models import AuditEvent, Ingredient, Meal, MealPlanEntry, RecipeIngredient
 from .schemas import DashboardOutput, MealCreate, MealOutput, MealUpdate, PlanEntryInput, PlanEntryOutput
 
-APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.14.1")
+APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.14.0")
 STATIC_DIR = Path(os.getenv("DINNERHUB_STATIC_DIR", "/app/static"))
 OPTIONS_FILE = Path("/data/options.json")
 DbSession = Annotated[Session, Depends(get_db)]
@@ -66,7 +66,6 @@ def record_audit(
     previous_value: dict | None = None,
     new_value: dict | None = None,
     source: str = "web",
-    result: str = "success",
 ) -> None:
     db.add(
         AuditEvent(
@@ -78,7 +77,6 @@ def record_audit(
             previous_value=previous_value,
             new_value=new_value,
             source=source,
-            result=result,
         )
     )
 
@@ -128,9 +126,12 @@ def meal_to_dict(meal: Meal) -> dict:
         "source_url": meal.source_url,
         "favourite": meal.favourite,
         "household_rating": meal.household_rating,
+        "active": meal.active,
+        "last_prepared_at": meal.last_prepared_at,
+        "selection_count": meal.selection_count,
         "ingredients": [
             {
-                "id": link.id,
+                "id": link.ingredient.id,
                 "name": link.ingredient.name,
                 "quantity": link.quantity,
                 "unit": link.unit,
@@ -140,43 +141,24 @@ def meal_to_dict(meal: Meal) -> dict:
             }
             for link in meal.ingredients
         ],
-        "active": meal.active,
+        "created_at": meal.created_at,
+        "updated_at": meal.updated_at,
     }
 
 
-def upsert_ingredients(db: Session, meal: Meal, supplied: list[dict]) -> None:
-    meal.ingredients.clear()
-    for index, item in enumerate(supplied):
-        name = str(item.get("name") or "").strip()
-        if not name:
-            continue
-        ingredient = db.scalar(select(Ingredient).where(func.lower(Ingredient.name) == name.lower()))
-        if ingredient is None:
-            ingredient = Ingredient(
-                name=name,
-                shopping_category=item.get("shopping_category") or "Other",
-                default_unit=item.get("unit"),
-            )
-            db.add(ingredient)
-            db.flush()
-        meal.ingredients.append(
-            RecipeIngredient(
-                ingredient=ingredient,
-                quantity=item.get("quantity"),
-                unit=item.get("unit"),
-                notes=item.get("notes"),
-                optional=bool(item.get("optional", False)),
-                sort_order=index,
-            )
-        )
-
-
 def plan_to_dict(entry: MealPlanEntry) -> dict:
+    titles = {
+        "takeaway": "Takeaway",
+        "leftovers": "Leftovers",
+        "eating_out": "Eating out",
+        "no_meal": "No meal required",
+    }
+    title = entry.meal.name if entry.meal else entry.custom_title or titles.get(entry.entry_type, "Unplanned")
     return {
         "id": entry.id,
         "meal_date": entry.meal_date,
         "meal_id": entry.meal_id,
-        "title": entry.meal.name if entry.meal else (entry.custom_title or "No meal selected"),
+        "title": title,
         "entry_type": entry.entry_type,
         "status": entry.status,
         "servings": entry.servings,
@@ -185,54 +167,148 @@ def plan_to_dict(entry: MealPlanEntry) -> dict:
         "locked": entry.locked,
         "notes": entry.notes,
         "meal": meal_to_dict(entry.meal) if entry.meal else None,
+        "created_at": entry.created_at,
+        "updated_at": entry.updated_at,
     }
+
+
+def get_meal_or_404(db: Session, meal_id: int) -> Meal:
+    meal = db.scalar(meal_query().where(Meal.id == meal_id))
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    return meal
+
+
+def replace_ingredients(db: Session, meal: Meal, items) -> None:  # type: ignore[no-untyped-def]
+    meal.ingredients.clear()
+    for position, item in enumerate(items):
+        normalised = " ".join(item.name.lower().split())
+        ingredient = db.scalar(select(Ingredient).where(func.lower(Ingredient.name) == normalised))
+        if not ingredient:
+            ingredient = Ingredient(
+                name=normalised.title(),
+                shopping_category=item.shopping_category or "Other",
+                default_unit=item.unit,
+            )
+            db.add(ingredient)
+            db.flush()
+        meal.ingredients.append(
+            RecipeIngredient(
+                ingredient=ingredient,
+                quantity=item.quantity,
+                unit=item.unit,
+                notes=item.notes,
+                optional=item.optional,
+                sort_order=position,
+            )
+        )
 
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "version": APP_VERSION, "database": str(DATABASE_PATH)}
+    return {
+        "status": "ok",
+        "service": "FoodHub",
+        "version": APP_VERSION,
+        "database": "ready" if DATABASE_PATH.exists() else "initialising",
+    }
 
 
 @app.get("/api/ready")
-def ready() -> dict:
-    return {"status": "ready", "version": APP_VERSION, "database": DATABASE_PATH.exists()}
+def readiness(db: DbSession) -> dict:
+    db.scalar(select(func.count(Meal.id)))
+    return {"status": "ready", "version": APP_VERSION}
 
 
 @app.get("/api/version")
 def version() -> dict:
-    return {"version": APP_VERSION}
-
-
-@app.get("/api/dashboard", response_model=DashboardOutput)
-def dashboard(db: DbSession, days: int = Query(default=7, ge=1, le=31)) -> dict:
-    today = date.today()
-    entries = db.scalars(
-        select(MealPlanEntry)
-        .options(selectinload(MealPlanEntry.meal).selectinload(Meal.ingredients).selectinload(RecipeIngredient.ingredient))
-        .where(MealPlanEntry.meal_date.between(today, today + timedelta(days=days - 1)))
-        .order_by(MealPlanEntry.meal_date)
-    ).all()
-    by_date = {entry.meal_date: entry for entry in entries}
-    upcoming = [by_date.get(today + timedelta(days=offset)) for offset in range(days)]
     return {
+        "name": "FoodHub",
         "version": APP_VERSION,
-        "today": plan_to_dict(by_date[today]) if today in by_date else None,
-        "tomorrow": plan_to_dict(by_date[today + timedelta(days=1)]) if today + timedelta(days=1) in by_date else None,
-        "upcoming": [plan_to_dict(entry) for entry in upcoming if entry is not None],
-        "unplanned_days": sum(1 for entry in upcoming if entry is None or entry.meal_id is None),
-        "active_meals": db.scalar(select(func.count(Meal.id)).where(Meal.active.is_(True))) or 0,
+        "slug": "dinnerhub",
+        "legacy_name": "DinnerHub",
+        "compatibility": "legacy technical identifiers retained",
     }
 
 
+@app.get("/api/v1/capabilities")
+def v1_capabilities() -> dict:
+    return {
+        "service": "FoodHub",
+        "api_version": "v1",
+        "application_version": APP_VERSION,
+        "technical_slug": "dinnerhub",
+        "capabilities": {
+            "connectivity": True,
+            "scheduled_dinners": True,
+            "recipe_catalogue": True,
+            "recipe_nutrition": False,
+            "shopping_list_handoff": False,
+            "events": False,
+        },
+        "nutrition": {
+            "available": False,
+            "authoritative": False,
+            "reason": "FoodHub does not yet store validated recipe nutrition in the v1 contract.",
+        },
+    }
+
+
+@app.get("/api/v1/recipes/{meal_id}/summary")
+def v1_recipe_summary(meal_id: int, db: DbSession) -> dict:
+    meal = get_meal_or_404(db, meal_id)
+    return {
+        "id": str(meal.id),
+        "name": meal.name,
+        "image_ref": meal.image_url,
+        "serving_count": meal.servings,
+        "active": meal.active,
+        "updated_at": meal.updated_at,
+        "nutrition": {
+            "available": False,
+            "authoritative": False,
+            "completeness": "unavailable",
+            "reason": "Validated recipe nutrition has not been implemented in FoodHub yet.",
+        },
+    }
+
+
+@app.get("/api/settings")
+def settings() -> dict:
+    return load_options()
+
+
 @app.get("/api/meals", response_model=list[MealOutput])
-def list_meals(db: DbSession, include_archived: bool = False, search: str | None = None) -> list[dict]:
-    query = meal_query()
-    if not include_archived:
-        query = query.where(Meal.active.is_(True))
+def list_meals(
+    db: DbSession,
+    search: str | None = Query(default=None, max_length=180),
+    protein: str | None = Query(default=None, max_length=80),
+    category: str | None = Query(default=None, max_length=80),
+    active: bool | None = True,
+    favourite: bool | None = None,
+) -> list[dict]:
+    statement = meal_query()
+    if active is not None:
+        statement = statement.where(Meal.active == active)
+    if protein:
+        statement = statement.where(func.lower(Meal.main_protein) == protein.lower())
+    if category:
+        statement = statement.where(func.lower(Meal.category) == category.lower())
+    if favourite is not None:
+        statement = statement.where(Meal.favourite == favourite)
     if search:
-        term = f"%{search.strip()}%"
-        query = query.where(or_(Meal.name.ilike(term), Meal.description.ilike(term), Meal.category.ilike(term)))
-    meals = db.scalars(query.order_by(Meal.name)).unique().all()
+        pattern = f"%{search.lower()}%"
+        ingredient_ids = select(RecipeIngredient.meal_id).join(Ingredient).where(func.lower(Ingredient.name).like(pattern))
+        statement = statement.where(
+            or_(
+                func.lower(Meal.name).like(pattern),
+                func.lower(func.coalesce(Meal.description, "")).like(pattern),
+                func.lower(func.coalesce(Meal.main_protein, "")).like(pattern),
+                func.lower(func.coalesce(Meal.category, "")).like(pattern),
+                Meal.id.in_(ingredient_ids),
+            )
+        )
+    meals = db.scalars(statement.order_by(Meal.name)).unique().all()
     return [meal_to_dict(meal) for meal in meals]
 
 
@@ -240,32 +316,40 @@ def list_meals(db: DbSession, include_archived: bool = False, search: str | None
 def create_meal(
     payload: MealCreate,
     db: DbSession,
-    x_dinnerhub_user_id: str | None = Header(default=None),
-    x_dinnerhub_user_name: str | None = Header(default=None),
-    x_dinnerhub_display_name: str | None = Header(default=None),
+    x_remote_user_id: str | None = Header(default=None),
+    x_remote_user_name: str | None = Header(default=None),
+    x_remote_user_display_name: str | None = Header(default=None),
 ) -> dict:
-    values = payload.model_dump(exclude={"ingredients"})
-    meal = Meal(**values)
+    actor_id, actor_name = actor(x_remote_user_id, x_remote_user_name, x_remote_user_display_name)
+    values = payload.model_dump(exclude={"ingredients", "image_url", "source_url"})
+    meal = Meal(
+        **values,
+        image_url=str(payload.image_url) if payload.image_url else None,
+        source_url=str(payload.source_url) if payload.source_url else None,
+    )
     db.add(meal)
+    replace_ingredients(db, meal, payload.ingredients)
     try:
         db.flush()
-        upsert_ingredients(db, meal, [item.model_dump() for item in payload.ingredients])
-        actor_id, actor_name = actor(x_dinnerhub_user_id, x_dinnerhub_user_name, x_dinnerhub_display_name)
-        record_audit(db, actor_id=actor_id, actor_name=actor_name, action="meal.create", entity_type="meal", entity_id=meal.id, new_value=values)
+        record_audit(
+            db,
+            actor_id=actor_id,
+            actor_name=actor_name,
+            action="recipe_created",
+            entity_type="meal",
+            entity_id=meal.id,
+            new_value={"name": meal.name},
+        )
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(status_code=409, detail="A meal with that name already exists") from exc
-    db.refresh(meal)
-    return meal_to_dict(db.scalar(meal_query().where(Meal.id == meal.id)))
+        raise HTTPException(status_code=409, detail="A meal with this name already exists") from exc
+    return meal_to_dict(get_meal_or_404(db, meal.id))
 
 
 @app.get("/api/meals/{meal_id}", response_model=MealOutput)
 def get_meal(meal_id: int, db: DbSession) -> dict:
-    meal = db.scalar(meal_query().where(Meal.id == meal_id))
-    if meal is None:
-        raise HTTPException(status_code=404, detail="Meal not found")
-    return meal_to_dict(meal)
+    return meal_to_dict(get_meal_or_404(db, meal_id))
 
 
 @app.put("/api/meals/{meal_id}", response_model=MealOutput)
@@ -273,99 +357,306 @@ def update_meal(
     meal_id: int,
     payload: MealUpdate,
     db: DbSession,
-    x_dinnerhub_user_id: str | None = Header(default=None),
-    x_dinnerhub_user_name: str | None = Header(default=None),
-    x_dinnerhub_display_name: str | None = Header(default=None),
+    x_remote_user_id: str | None = Header(default=None),
+    x_remote_user_name: str | None = Header(default=None),
+    x_remote_user_display_name: str | None = Header(default=None),
 ) -> dict:
-    meal = db.scalar(meal_query().where(Meal.id == meal_id))
-    if meal is None:
-        raise HTTPException(status_code=404, detail="Meal not found")
-    previous = meal_to_dict(meal)
-    changes = payload.model_dump(exclude_unset=True)
-    supplied_ingredients = changes.pop("ingredients", None)
-    for key, value in changes.items():
-        setattr(meal, key, value)
-    if supplied_ingredients is not None:
-        upsert_ingredients(db, meal, supplied_ingredients)
-    actor_id, actor_name = actor(x_dinnerhub_user_id, x_dinnerhub_user_name, x_dinnerhub_display_name)
-    record_audit(db, actor_id=actor_id, actor_name=actor_name, action="meal.update", entity_type="meal", entity_id=meal.id, previous_value=previous, new_value=changes)
+    actor_id, actor_name = actor(x_remote_user_id, x_remote_user_name, x_remote_user_display_name)
+    meal = get_meal_or_404(db, meal_id)
+    previous = {"name": meal.name, "active": meal.active}
+    for field, value in payload.model_dump(exclude={"ingredients", "image_url", "source_url"}).items():
+        setattr(meal, field, value)
+    meal.image_url = str(payload.image_url) if payload.image_url else None
+    meal.source_url = str(payload.source_url) if payload.source_url else None
+    replace_ingredients(db, meal, payload.ingredients)
+    record_audit(
+        db,
+        actor_id=actor_id,
+        actor_name=actor_name,
+        action="recipe_edited",
+        entity_type="meal",
+        entity_id=meal.id,
+        previous_value=previous,
+        new_value={"name": meal.name, "active": meal.active},
+    )
     try:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(status_code=409, detail="A meal with that name already exists") from exc
-    return meal_to_dict(db.scalar(meal_query().where(Meal.id == meal.id)))
+        raise HTTPException(status_code=409, detail="A meal with this name already exists") from exc
+    return meal_to_dict(get_meal_or_404(db, meal.id))
 
 
 @app.delete("/api/meals/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
 def archive_meal(
     meal_id: int,
     db: DbSession,
-    x_dinnerhub_user_id: str | None = Header(default=None),
-    x_dinnerhub_user_name: str | None = Header(default=None),
-    x_dinnerhub_display_name: str | None = Header(default=None),
+    x_remote_user_id: str | None = Header(default=None),
+    x_remote_user_name: str | None = Header(default=None),
+    x_remote_user_display_name: str | None = Header(default=None),
 ) -> Response:
-    meal = db.get(Meal, meal_id)
-    if meal is None:
-        raise HTTPException(status_code=404, detail="Meal not found")
+    actor_id, actor_name = actor(x_remote_user_id, x_remote_user_name, x_remote_user_display_name)
+    meal = get_meal_or_404(db, meal_id)
     meal.active = False
-    actor_id, actor_name = actor(x_dinnerhub_user_id, x_dinnerhub_user_name, x_dinnerhub_display_name)
-    record_audit(db, actor_id=actor_id, actor_name=actor_name, action="meal.archive", entity_type="meal", entity_id=meal.id)
+    record_audit(
+        db,
+        actor_id=actor_id,
+        actor_name=actor_name,
+        action="recipe_archived",
+        entity_type="meal",
+        entity_id=meal.id,
+        previous_value={"active": True},
+        new_value={"active": False},
+    )
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@app.post("/api/meals/{meal_id}/restore", response_model=MealOutput)
+def restore_meal(meal_id: int, db: DbSession) -> dict:
+    meal = get_meal_or_404(db, meal_id)
+    meal.active = True
+    db.add(
+        AuditEvent(
+            actor_id="system",
+            actor_name="FoodHub",
+            action="recipe_restored",
+            entity_type="meal",
+            entity_id=str(meal.id),
+        )
+    )
+    db.commit()
+    return meal_to_dict(get_meal_or_404(db, meal.id))
+
+
 @app.get("/api/meal-plan", response_model=list[PlanEntryOutput])
-def list_plan(db: DbSession, start: date = Query(default_factory=date.today), days: int = Query(default=14, ge=1, le=60)) -> list[dict]:
-    entries = db.scalars(
+def get_meal_plan(
+    db: DbSession,
+    start: date | None = Query(default=None),
+    days: int = Query(default=7, ge=1, le=31),
+) -> list[dict]:
+    start_date = start or date.today()
+    end_date = start_date + timedelta(days=days - 1)
+    statement = (
         select(MealPlanEntry)
         .options(selectinload(MealPlanEntry.meal).selectinload(Meal.ingredients).selectinload(RecipeIngredient.ingredient))
-        .where(MealPlanEntry.meal_date.between(start, start + timedelta(days=days - 1)))
+        .where(MealPlanEntry.meal_date.between(start_date, end_date))
         .order_by(MealPlanEntry.meal_date)
-    ).unique().all()
-    return [plan_to_dict(entry) for entry in entries]
+    )
+    return [plan_to_dict(entry) for entry in db.scalars(statement).unique().all()]
 
 
 @app.put("/api/meal-plan/{meal_date}", response_model=PlanEntryOutput)
-def put_plan_entry(
+def upsert_plan_entry(
     meal_date: date,
     payload: PlanEntryInput,
     db: DbSession,
-    x_dinnerhub_user_id: str | None = Header(default=None),
-    x_dinnerhub_user_name: str | None = Header(default=None),
-    x_dinnerhub_display_name: str | None = Header(default=None),
+    x_remote_user_id: str | None = Header(default=None),
+    x_remote_user_name: str | None = Header(default=None),
+    x_remote_user_display_name: str | None = Header(default=None),
 ) -> dict:
-    entry = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == meal_date))
-    previous = plan_to_dict(entry) if entry else None
-    if entry is None:
-        entry = MealPlanEntry(meal_date=meal_date)
+    actor_id, actor_name = actor(x_remote_user_id, x_remote_user_name, x_remote_user_display_name)
+    if payload.entry_type == "meal" and payload.meal_id is None:
+        raise HTTPException(status_code=422, detail="meal_id is required when entry_type is meal")
+    meal = get_meal_or_404(db, payload.meal_id) if payload.meal_id else None
+    existing = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == meal_date))
+    previous_meal_id = existing.meal_id if existing else None
+    previous = (
+        {
+            "date": existing.meal_date.isoformat(),
+            "meal_id": existing.meal_id,
+            "entry_type": existing.entry_type,
+            "status": existing.status,
+        }
+        if existing
+        else None
+    )
+    entry = existing or MealPlanEntry(meal_date=meal_date)
+    entry.meal = meal
+    entry.entry_type = payload.entry_type
+    entry.custom_title = payload.custom_title
+    entry.servings = payload.servings or (meal.servings if meal else None)
+    entry.selected_by_id = actor_id
+    entry.selected_by_name = actor_name
+    entry.locked = payload.locked
+    entry.notes = payload.notes
+    if not existing:
         db.add(entry)
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(entry, key, value)
-    actor_id, actor_name = actor(x_dinnerhub_user_id, x_dinnerhub_user_name, x_dinnerhub_display_name)
-    record_audit(db, actor_id=actor_id, actor_name=actor_name, action="plan.update", entity_type="meal_plan_entry", entity_id=meal_date.isoformat(), previous_value=previous, new_value=payload.model_dump(exclude_unset=True))
+    if meal and previous_meal_id != meal.id:
+        meal.selection_count += 1
+    db.flush()
+    record_audit(
+        db,
+        actor_id=actor_id,
+        actor_name=actor_name,
+        action="meal_assigned" if not existing else "meal_replaced",
+        entity_type="meal_plan_entry",
+        entity_id=entry.id,
+        previous_value=previous,
+        new_value={"date": meal_date.isoformat(), "meal_id": payload.meal_id, "entry_type": payload.entry_type},
+    )
     db.commit()
-    entry = db.scalar(
+    refreshed = db.scalar(
         select(MealPlanEntry)
         .options(selectinload(MealPlanEntry.meal).selectinload(Meal.ingredients).selectinload(RecipeIngredient.ingredient))
-        .where(MealPlanEntry.meal_date == meal_date)
+        .where(MealPlanEntry.id == entry.id)
     )
-    return plan_to_dict(entry)
+    if not refreshed:
+        raise HTTPException(status_code=500, detail="Meal plan entry could not be reloaded")
+    return plan_to_dict(refreshed)
 
 
 @app.delete("/api/meal-plan/{meal_date}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_plan_entry(meal_date: date, db: DbSession) -> Response:
     entry = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == meal_date))
-    if entry is None:
-        raise HTTPException(status_code=404, detail="Meal plan entry not found")
+    if not entry:
+        raise HTTPException(status_code=404, detail="No planned dinner exists for this date")
+    record_audit(
+        db,
+        actor_id="local-user",
+        actor_name="FoodHub user",
+        action="meal_removed",
+        entity_type="meal_plan_entry",
+        entity_id=entry.id,
+        previous_value={"date": meal_date.isoformat(), "meal_id": entry.meal_id, "entry_type": entry.entry_type},
+    )
     db.delete(entry)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.get("/{path:path}")
-def frontend(path: str) -> FileResponse:
-    candidate = STATIC_DIR / path
-    if path and candidate.is_file():
-        return FileResponse(candidate)
-    return FileResponse(STATIC_DIR / "index.html")
+@app.post("/api/meal-plan/{meal_date}/complete", response_model=PlanEntryOutput)
+def complete_plan_entry(meal_date: date, db: DbSession) -> dict:
+    entry = db.scalar(
+        select(MealPlanEntry)
+        .options(selectinload(MealPlanEntry.meal).selectinload(Meal.ingredients).selectinload(RecipeIngredient.ingredient))
+        .where(MealPlanEntry.meal_date == meal_date)
+    )
+    if not entry:
+        raise HTTPException(status_code=404, detail="No planned dinner exists for this date")
+    entry.status = "completed"
+    if entry.meal:
+        entry.meal.last_prepared_at = meal_date
+    record_audit(
+        db,
+        actor_id="local-user",
+        actor_name="FoodHub user",
+        action="meal_marked_completed",
+        entity_type="meal_plan_entry",
+        entity_id=entry.id,
+        new_value={"status": "completed"},
+    )
+    db.commit()
+    return plan_to_dict(entry)
+
+
+@app.get("/api/dashboard", response_model=DashboardOutput)
+def dashboard(db: DbSession, days: int = Query(default=7, ge=1, le=14)) -> dict:
+    today = date.today()
+    entries = get_meal_plan(db=db, start=today, days=days)
+    by_date = {entry["meal_date"]: entry for entry in entries}
+    active_meals = db.scalar(select(func.count(Meal.id)).where(Meal.active.is_(True))) or 0
+    return {
+        "version": APP_VERSION,
+        "today": by_date.get(today),
+        "tomorrow": by_date.get(today + timedelta(days=1)),
+        "upcoming": entries,
+        "unplanned_days": sum(1 for offset in range(days) if today + timedelta(days=offset) not in by_date),
+        "active_meals": active_meals,
+    }
+
+
+@app.get("/api/home-assistant/states")
+def home_assistant_states(db: DbSession) -> dict:
+    today = date.today()
+    entries = get_meal_plan(db=db, start=today, days=14)
+    by_date = {entry["meal_date"]: entry for entry in entries}
+
+    def sensor_payload(target: date) -> dict:
+        entry = by_date.get(target)
+        if not entry:
+            return {"state": "Unplanned", "attributes": {"date": target.isoformat(), "planned": False}}
+        meal = entry.get("meal")
+        return {
+            "state": entry["title"],
+            "attributes": {
+                "date": target.isoformat(),
+                "planned": True,
+                "recipe_id": entry["meal_id"],
+                "entry_type": entry["entry_type"],
+                "status": entry["status"],
+                "selected_by": entry["selected_by_name"],
+                "protein": meal["main_protein"] if meal else None,
+                "category": meal["category"] if meal else None,
+                "preparation_time": meal["prep_minutes"] if meal else None,
+                "cooking_time": meal["cook_minutes"] if meal else None,
+                "total_time": meal["total_minutes"] if meal else None,
+                "servings": entry["servings"],
+                "image_url": meal["image_url"] if meal else None,
+            },
+        }
+
+    next_entry = next((entry for entry in entries if entry["meal_date"] >= today), None)
+    return {
+        "sensor.dinnerhub_dinner_today": sensor_payload(today),
+        "sensor.dinnerhub_dinner_tomorrow": sensor_payload(today + timedelta(days=1)),
+        "sensor.dinnerhub_next_planned_dinner": {
+            "state": next_entry["title"] if next_entry else "Unplanned",
+            "attributes": {"date": next_entry["meal_date"].isoformat() if next_entry else None},
+        },
+        "sensor.dinnerhub_meal_plan_status": {
+            "state": "complete" if len(entries) >= 7 else "incomplete",
+            "attributes": {"planned_days": len(entries), "days_checked": 14},
+        },
+    }
+
+
+@app.get("/api/calendar")
+def calendar_events(
+    db: DbSession,
+    start: date | None = Query(default=None),
+    days: int = Query(default=14, ge=1, le=90),
+) -> list[dict]:
+    return [
+        {
+            "summary": entry["title"],
+            "start": entry["meal_date"].isoformat(),
+            "end": (entry["meal_date"] + timedelta(days=1)).isoformat(),
+            "all_day": True,
+            "description": f"FoodHub: {entry['entry_type']}",
+            "uid": f"dinnerhub-{entry['id']}@home-assistant",
+        }
+        for entry in get_meal_plan(db=db, start=start or date.today(), days=days)
+    ]
+
+
+@app.get("/api/audit")
+def list_audit_events(db: DbSession, limit: int = Query(default=100, ge=1, le=500)) -> list[dict]:
+    events = db.scalars(select(AuditEvent).order_by(AuditEvent.occurred_at.desc()).limit(limit)).all()
+    return [
+        {
+            "id": event.id,
+            "occurred_at": event.occurred_at,
+            "actor_id": event.actor_id,
+            "actor_name": event.actor_name,
+            "action": event.action,
+            "entity_type": event.entity_type,
+            "entity_id": event.entity_id,
+            "previous_value": event.previous_value,
+            "new_value": event.new_value,
+            "source": event.source,
+            "result": event.result,
+        }
+        for event in events
+    ]
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def frontend(full_path: str):  # type: ignore[no-untyped-def]
+    requested = STATIC_DIR / full_path
+    if full_path and requested.is_file() and requested.resolve().is_relative_to(STATIC_DIR.resolve()):
+        return FileResponse(requested)
+    index = STATIC_DIR / "index.html"
+    if index.exists():
+        return FileResponse(index)
+    raise HTTPException(status_code=404, detail="FoodHub frontend has not been built")
