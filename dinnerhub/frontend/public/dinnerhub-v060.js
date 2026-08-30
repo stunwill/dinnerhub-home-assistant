@@ -34,12 +34,12 @@ const state = {
 };
 
 const logoMarkup = (compact = false) => `
-  <div class="dh-brand ${compact ? 'dh-brand-compact' : ''}" aria-label="DinnerHub by Stu">
+  <div class="dh-brand ${compact ? 'dh-brand-compact' : ''}" aria-label="FoodHub by Stu">
     <span class="dh-emblem" aria-hidden="true">
       <span class="dh-fork">⌑</span><span class="dh-knife">▮</span>
     </span>
     <span class="dh-wordmark-wrap">
-      <strong class="dh-wordmark">DinnerHub</strong>
+      <strong class="dh-wordmark">FoodHub</strong>
       <span class="dh-by-stu">by Stu</span>
     </span>
   </div>
@@ -113,7 +113,7 @@ const openRatingModal = async (meal) => {
         <div><span>HOUSEHOLD SCORE</span><h2>${meal.name}</h2></div>
         <button type="button" class="dh-close" aria-label="Close">×</button>
       </div>
-      <p>Each person can score this meal from 0 to 10. DinnerHub calculates the average from the scores entered.</p>
+      <p>Each person can score this meal from 0 to 10. FoodHub calculates the average from the scores entered.</p>
       <div class="dh-rating-grid">
         ${members.map((member) => {
           const value = existing.ratings[member];
@@ -194,7 +194,7 @@ const assignMeal = async (meal, date) => {
       status: 'planned',
       servings: meal.servings,
       selected_by_id: 'web',
-      selected_by_name: 'DinnerHub',
+      selected_by_name: 'FoodHub',
       locked: false,
       notes: null
     })
@@ -322,7 +322,7 @@ const start = async () => {
     state.observer = new MutationObserver(() => window.requestAnimationFrame(enhance));
     state.observer.observe(document.getElementById('root'), { childList: true, subtree: true });
   } catch (error) {
-    console.error('DinnerHub v0.6 enhancements failed to start', error);
+    console.error('FoodHub v0.6 enhancements failed to start', error);
   }
 };
 
