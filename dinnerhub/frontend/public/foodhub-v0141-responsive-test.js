@@ -1,10 +1,12 @@
+import { readFile } from 'node:fs/promises';
+
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
 
 const viewportWidths = [320, 360, 375, 390, 393, 414, 430];
-const css = await fetch('/foodhub-v0141.css').then((response) => response.text());
-const html = await fetch('/').then((response) => response.text());
+const css = await readFile(new URL('./foodhub-v0141.css', import.meta.url), 'utf8');
+const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 
 assert(!/max-width:\s*calc\(100vw/i.test(css), 'Corrective CSS must not reintroduce 100vw shell constraints');
 assert(/\.dh-brand[\s\S]*min-width:\s*0\s*!important/i.test(css), 'FoodHub brand must be shrinkable');
