@@ -124,14 +124,7 @@ jobs:
       - run: node --check public/dinnerhub-v013.js
       - run: node --check public/foodhub-v014.js
       - run: node --check public/foodhub-v0141.js
-      - name: Validate mobile responsive invariants
-        run: |
-          npm run build
-          python -m http.server 4173 --directory dist >/tmp/foodhub-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill $SERVER_PID' EXIT
-          sleep 1
-          node public/foodhub-v0141-responsive-test.js
+      - run: node public/foodhub-v0141-responsive-test.js
       - run: npm run build
 
   validate-app:
