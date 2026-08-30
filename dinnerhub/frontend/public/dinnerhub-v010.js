@@ -10,7 +10,7 @@ const dhEsc = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({'&':
 const dhInstallLogo = () => {
   document.querySelectorAll('.dh-brand').forEach((brand) => {
     if (brand.querySelector('.dh-logo-image')) return;
-    brand.innerHTML = '<img class="dh-logo-image" src="/dinnerhub-logo.svg" alt="DinnerHub by Stu">';
+    brand.innerHTML = '<img class="dh-logo-image" src="/dinnerhub-logo.svg" alt="FoodHub by Stu">';
   });
 };
 
@@ -35,7 +35,7 @@ const dhSettingsModal = async () => {
   try { settings = await dhAiJson('ai/settings'); }
   catch (error) { settings = {configured:false, api_key_masked:'', api_base_url:'https://api.openai.com/v1', analysis_model:'gpt-4.1-mini', transcription_model:'gpt-4o-transcribe'}; }
   const modal = dhModal('AI CONFIGURATION', 'OpenAI settings', `
-    <p>DinnerHub stores the API key inside its persistent Home Assistant app data. The full key is never returned to the browser after it is saved.</p>
+    <p>FoodHub stores the API key inside its persistent Home Assistant app data. The full key is never returned to the browser after it is saved.</p>
     <div class="dh-ai-grid">
       <label class="dh-ai-field full"><span>OpenAI API key</span><input id="dh-ai-key" type="password" autocomplete="off" placeholder="${settings.configured ? dhEsc(settings.api_key_masked) + ' (leave blank to keep)' : 'sk-…'}"></label>
       <label class="dh-ai-field full"><span>API base URL</span><input id="dh-ai-base" value="${dhEsc(settings.api_base_url)}"></label>
@@ -129,7 +129,7 @@ const dhReviewDraft = (draft) => {
 
 const dhImportModal = () => {
   const modal = dhModal('AI RECIPE IMPORT', 'Import a recipe from video', `
-    <p>Upload a cooking video or provide a direct video URL. DinnerHub extracts audio and representative frames, sends them to the configured OpenAI API, then presents a draft for review.</p>
+    <p>Upload a cooking video or provide a direct video URL. FoodHub extracts audio and representative frames, sends them to the configured OpenAI API, then presents a draft for review.</p>
     <div class="dh-ai-source-tabs"><button class="active" data-mode="upload">Upload video</button><button data-mode="url">Video URL</button></div>
     <div id="dh-ai-upload-panel"><label class="dh-ai-field"><span>Video file</span><input id="dh-ai-video" type="file" accept="video/*"></label><div class="dh-ai-note">Maximum 250 MB. Downloading an Instagram or Facebook video first is the most reliable option.</div></div>
     <div id="dh-ai-url-panel" hidden><label class="dh-ai-field"><span>Direct video URL</span><input id="dh-ai-url" type="url" placeholder="https://…"></label><div class="dh-ai-warning">Instagram and Facebook page links may not expose the video to automated requests. If retrieval fails, download the video and upload it here.</div></div>
