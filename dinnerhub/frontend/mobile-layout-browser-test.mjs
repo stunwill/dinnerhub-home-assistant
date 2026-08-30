@@ -109,6 +109,25 @@ const clickLocatorIfPresent = async (locator) => {
   return false;
 };
 
+const getWidthSnapshot = async (page, selector) =>
+  page.evaluate((targetSelector) => {
+    const target = document.querySelector(targetSelector);
+    const shell = document.querySelector('.app-shell');
+    if (!target || !shell) return null;
+
+    const targetStyle = getComputedStyle(target);
+    if (targetStyle.display === 'none' || targetStyle.visibility === 'hidden') return null;
+
+    const targetRect = target.getBoundingClientRect();
+    const shellRect = shell.getBoundingClientRect();
+    if (!targetRect.width || !targetRect.height || !shellRect.width) return null;
+
+    return {
+      targetWidth: targetRect.width,
+      shellWidth: shellRect.width,
+    };
+  }, selector);
+
 const browser = await chromium.launch({ headless: true });
 try {
   for (const width of widths) {
@@ -133,12 +152,12 @@ try {
 
       if (await clickIfVisible(page, 'Meal plan')) {
         await assertLayoutFits(page, `${width}px Meal Plan`);
-        const guided = page.locator('.dh-plan-builder').first();
-        if (await guided.count() && await guided.isVisible()) {
-          const rect = await guided.boundingBox();
-          const shell = await page.locator('.app-shell').boundingBox();
-          if (rect && shell && rect.width < shell.width * 0.9) {
-            throw new Error(`${width}px Guided Planning collapsed to ${rect.width}px inside ${shell.width}px shell`);
+        const guidedSnapshot = await getWidthSnapshot(page, '.dh-plan-builder');
+        if (guidedSnapshot) {
+          if (guidedSnapshot.targetWidth < guidedSnapshot.shellWidth * 0.9) {
+            throw new Error(
+              `${width}px Guided Planning collapsed to ${guidedSnapshot.targetWidth}px inside ${guidedSnapshot.shellWidth}px shell`,
+            );
           }
           await assertLayoutFits(page, `${width}px Guided Planning`);
         }
@@ -146,12 +165,12 @@ try {
 
       if (await clickIfVisible(page, 'Meals')) {
         await assertLayoutFits(page, `${width}px Meals`);
-        const discovery = page.locator('.planner-filter-panel').first();
-        if (await discovery.count() && await discovery.isVisible()) {
-          const rect = await discovery.boundingBox();
-          const shell = await page.locator('.app-shell').boundingBox();
-          if (rect && shell && rect.width < shell.width * 0.9) {
-            throw new Error(`${width}px Recipe Discovery collapsed to ${rect.width}px inside ${shell.width}px shell`);
+        const discoverySnapshot = await getWidthSnapshot(page, '.planner-filter-panel');
+        if (discoverySnapshot) {
+          if (discoverySnapshot.targetWidth < discoverySnapshot.shellWidth * 0.9) {
+            throw new Error(
+              `${width}px Recipe Discovery collapsed to ${discoverySnapshot.targetWidth}px inside ${discoverySnapshot.shellWidth}px shell`,
+            );
           }
           await assertLayoutFits(page, `${width}px Recipe Discovery`);
         }
