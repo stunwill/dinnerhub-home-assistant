@@ -2,6 +2,24 @@
 
 This root changelog is the canonical DevHub-discoverable release history for FoodHub. The Home Assistant-facing changelog remains at `dinnerhub/CHANGELOG.md`.
 
+## 0.14.3
+
+### Fixed
+- Removed the 0.14.2 runtime Visual Viewport width-guessing workaround that could still leave Home wider than the iPhone WebView while making Guided Planning and Recipe Discovery too narrow.
+- Replaced viewport-calculated page widths with stable containing-block sizing and explicit mobile reflow rules.
+- Kept FoodHub branding, Add Recipe, Import Recipe, AI Settings, primary navigation and Home cards inside the mobile content width.
+- Restored Guided Planning and Recipe Discovery to the full available content width rather than a collapsed narrow column.
+- Prevented mobile modals, planning controls and legacy extension surfaces from establishing a wider page.
+
+### Testing
+- Added a rendered Chromium regression test across 320, 360, 375, 390, 393, 414 and 430 px widths.
+- The browser test checks real `scrollWidth`, bounding boxes and horizontal scroll position on Home, Add Recipe, Meal Plan, Guided Planning, Meals and Recipe Discovery.
+- The test fails with the first offending DOM elements when any rendered content extends beyond the viewport.
+
+### Compatibility
+- The `dinnerhub` repository name, add-on slug, storage path and established Home Assistant identifiers remain unchanged.
+- No recipe, planning, rating or shopping data migration is required.
+
 ## 0.14.2
 
 ### Fixed
@@ -69,4 +87,4 @@ Earlier release details remain preserved in `dinnerhub/CHANGELOG.md` and reposit
 
 ## Release publication note
 
-The repository currently has no published GitHub Releases. Version `0.14.2` is established by the Home Assistant app metadata on this release branch. Future published tags/releases should use the same semantic version as the application metadata.
+The repository currently has no published GitHub Releases. Version `0.14.3` is established by the Home Assistant app metadata on this release branch. Future published tags/releases should use the same semantic version as the application metadata.
