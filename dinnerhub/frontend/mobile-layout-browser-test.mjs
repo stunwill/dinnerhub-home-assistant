@@ -90,23 +90,56 @@ const assertLayoutFits = async (page, label) => {
   }
 };
 
-const clickIfVisible = async (page, text) => {
-  const button = page.getByRole('button', { name: text, exact: true }).first();
-  if (await button.count() && await button.isVisible()) {
-    await button.evaluate((element) => element.click());
-    await page.waitForTimeout(150);
+const clickVisibleButtonByText = async (page, text) => {
+  const clicked = await page.evaluate((buttonText) => {
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const button = buttons.find((candidate) => {
+      if ((candidate.textContent || '').trim() !== buttonText) return false;
+      const style = getComputedStyle(candidate);
+      const rect = candidate.getBoundingClientRect();
+      return (
+        style.display !== 'none' &&
+        style.visibility !== 'hidden' &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    });
+    if (!button) return false;
+    button.click();
     return true;
-  }
-  return false;
+  }, text);
+
+  if (clicked) await page.waitForTimeout(150);
+  return clicked;
 };
 
-const clickLocatorIfPresent = async (locator) => {
-  if (await locator.count() && await locator.isVisible()) {
-    await locator.evaluate((element) => element.click());
-    await locator.page().waitForTimeout(150);
+const clickVisibleSelector = async (page, selector) => {
+  const clicked = await page.evaluate((targetSelector) => {
+    const element = document.querySelector(targetSelector);
+    if (!element) return false;
+    const style = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    if (style.display === 'none' || style.visibility === 'hidden' || !rect.width || !rect.height) return false;
+    element.click();
     return true;
-  }
-  return false;
+  }, selector);
+
+  if (clicked) await page.waitForTimeout(150);
+  return clicked;
+};
+
+const waitForVisibleSelector = async (page, selector, timeout = 5000) => {
+  await page.waitForFunction(
+    (targetSelector) => {
+      const element = document.querySelector(targetSelector);
+      if (!element) return false;
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+    },
+    selector,
+    { timeout },
+  );
 };
 
 const getWidthSnapshot = async (page, selector) =>
@@ -139,18 +172,17 @@ try {
 
     try {
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 10000 });
-      await page.locator('.app-shell').waitFor({ state: 'visible', timeout: 5000 });
+      await waitForVisibleSelector(page, '.app-shell');
       await assertLayoutFits(page, `${width}px Home`);
 
-      if (await clickIfVisible(page, 'Add recipe')) {
-        await page.locator('.recipe-form-modal').waitFor({ state: 'visible', timeout: 5000 });
+      if (await clickVisibleButtonByText(page, 'Add recipe')) {
+        await waitForVisibleSelector(page, '.recipe-form-modal');
         await assertLayoutFits(page, `${width}px Add Recipe`);
-        const close = page.locator('.recipe-form-modal .icon-button').first();
-        await clickLocatorIfPresent(close);
+        await clickVisibleSelector(page, '.recipe-form-modal .icon-button');
         await assertLayoutFits(page, `${width}px Home after Add Recipe`);
       }
 
-      if (await clickIfVisible(page, 'Meal plan')) {
+      if (await clickVisibleButtonByText(page, 'Meal plan')) {
         await assertLayoutFits(page, `${width}px Meal Plan`);
         const guidedSnapshot = await getWidthSnapshot(page, '.dh-plan-builder');
         if (guidedSnapshot) {
@@ -163,7 +195,7 @@ try {
         }
       }
 
-      if (await clickIfVisible(page, 'Meals')) {
+      if (await clickVisibleButtonByText(page, 'Meals')) {
         await assertLayoutFits(page, `${width}px Meals`);
         const discoverySnapshot = await getWidthSnapshot(page, '.planner-filter-panel');
         if (discoverySnapshot) {
