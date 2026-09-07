@@ -10,7 +10,7 @@ The legacy technical identifier `dinnerhub` is intentionally retained for the ad
 
 ## Current status
 
-The current corrective application version is **0.14.3**.
+The current feature application version is **0.15.0**.
 
 This repository contains:
 
@@ -19,8 +19,10 @@ This repository contains:
 - FastAPI and SQLAlchemy backend
 - Persistent SQLite storage in `/data/dinnerhub`
 - Meal and structured ingredient management
-- Seven-day and fourteen-day dinner planning
-- Today and tomorrow dashboard summaries
+- Weekly Breakfast, Lunch and Dinner planning
+- Recipe-backed and custom planned meals
+- Step-by-step Cooking Mode with serving-aware structured steps and optional timers
+- Today and tomorrow dinner dashboard summaries
 - Shopping-list functionality
 - AI-assisted recipe capture and improvement workflows
 - Recipe nutrition and HealthHub integration contracts
@@ -28,11 +30,19 @@ This repository contains:
 - Native Home Assistant integration support
 - CI and release workflow foundations
 
+## Meal Planner and Cooking Mode
+
+FoodHub 0.15.0 adds a first-class weekly Meal Planner. On phones and narrow Home Assistant WebViews, the week is presented as stacked day cards with Breakfast, Lunch and Dinner slots. Wider screens use a seven-column weekly overview. Planned meals can reference an existing recipe or a custom meal, with editing, moving, duplication and removal supported.
+
+Recipes can be added to the planner from recipe workflows. Recipe-backed planned meals can launch Cooking Mode directly. Cooking Mode presents one structured recipe step at a time, preserves the active step for the browser session, respects the selected serving count, uses FoodHub's structured ingredient associations where available, and exposes optional recipe-step timers.
+
+Existing dinner-only integrations remain compatible. FoodHub safely copies legacy dinner plans into the new Dinner slots, and Dinner updates from the new planner are mirrored to the established dinner-plan table used by the dashboard, Home Assistant states, calendar and versioned scheduled-dinner API.
+
 ## Mobile and Home Assistant Ingress
 
-FoodHub is designed to fit the actual Home Assistant Ingress containing block rather than setting the application width from `100vw` or JavaScript Visual Viewport calculations. Mobile layouts deliberately reflow FoodHub branding, primary actions, navigation, dashboard cards, Guided Planning, Recipe Discovery and AI dialogs so normal screens do not require document-level horizontal scrolling.
+FoodHub is designed to fit the actual Home Assistant Ingress containing block rather than setting the application width from `100vw` or JavaScript Visual Viewport calculations. Mobile layouts deliberately reflow FoodHub branding, primary actions, navigation, dashboard cards, Meal Planner, Cooking Mode, Guided Planning, Recipe Discovery and AI dialogs so normal screens do not require document-level horizontal scrolling.
 
-FoodHub 0.14.3 adds a rendered Chromium regression test at representative 320–430 px mobile widths. The test checks the real document `scrollWidth`, horizontal position and element bounding boxes after navigation and modal interactions so responsive regressions are detected by CI rather than by CSS-source inspection alone.
+The rendered Chromium regression test covers representative 320–430 px mobile widths. It checks the real document `scrollWidth`, horizontal position and element bounding boxes after navigation and modal interactions so responsive regressions are detected by CI rather than by CSS-source inspection alone.
 
 Light and dark modes share the same FoodHub theme variables across the core interface and legacy extension surfaces.
 
@@ -97,7 +107,7 @@ cd dinnerhub
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
-DINNERHUB_DATA_DIR=/tmp/dinnerhub-data uvicorn app.main:app --reload --port 8099
+DINNERHUB_DATA_DIR=/tmp/dinnerhub-data uvicorn app.main_v7:app --reload --port 8099
 ```
 
 Frontend:

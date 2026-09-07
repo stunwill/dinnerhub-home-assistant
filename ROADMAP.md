@@ -2,6 +2,32 @@
 
 FoodHub is the current user-facing product name. The repository, Home Assistant slug, storage path and existing integration identifiers retain the legacy `dinnerhub` name for compatibility.
 
+## v0.15.0 - Meal Planner & Cooking Mode
+
+Status: In development
+
+### Features
+- [x] Add persistent Breakfast, Lunch and Dinner planning slots.
+- [x] Support recipe-backed and custom planned meals.
+- [x] Support edit, move, duplicate and remove planner actions.
+- [x] Add recipe-to-planner scheduling.
+- [x] Add step-by-step Cooking Mode using existing structured cooking data and serving scaling.
+- [x] Preserve active Cooking Mode progress for the browser session.
+
+### Mobile UX
+- [x] Use stacked day cards on narrow mobile and Home Assistant Ingress viewports.
+- [x] Retain an efficient seven-day overview on wider screens.
+- [x] Keep planner and cooking surfaces inside the available viewport without document-level horizontal overflow.
+
+### Compatibility
+- [x] Preserve legacy dinner plan data during upgrade.
+- [x] Keep new Dinner changes synchronized with existing dashboard, Home Assistant, calendar and HealthHub scheduled-dinner contracts.
+- [x] Preserve legacy repository, add-on, storage and Home Assistant identifiers.
+
+### Testing
+- [x] Add backend Meal Planner lifecycle and validation tests.
+- [x] Keep existing rendered mobile layout regression coverage active.
+
 ## v0.14.0 - Nutrition & HealthHub Handoff
 
 Status: Released
