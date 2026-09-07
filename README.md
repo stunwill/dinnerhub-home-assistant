@@ -10,7 +10,7 @@ The legacy technical identifier `dinnerhub` is intentionally retained for the ad
 
 ## Current status
 
-The current feature application version is **0.15.0**.
+The current corrective application version is **0.15.1**.
 
 This repository contains:
 
@@ -40,9 +40,11 @@ Existing dinner-only integrations remain compatible. FoodHub safely copies legac
 
 ## Mobile and Home Assistant Ingress
 
-FoodHub is designed to fit the actual Home Assistant Ingress containing block rather than setting the application width from `100vw` or JavaScript Visual Viewport calculations. Mobile layouts deliberately reflow FoodHub branding, primary actions, navigation, dashboard cards, Meal Planner, Cooking Mode, Guided Planning, Recipe Discovery and AI dialogs so normal screens do not require document-level horizontal scrolling.
+FoodHub 0.15.1 refines the phone experience without changing the core data model. The mobile header is more compact, primary navigation is safe-area-aware and easier to reach, recipe cards and Home summaries use less vertical space, ingredient editing is more touch friendly, and core dialogs become full-height mobile task views instead of desktop-centred floating modals.
 
-The rendered Chromium regression test covers representative 320–430 px mobile widths. It checks the real document `scrollWidth`, horizontal position and element bounding boxes after navigation and modal interactions so responsive regressions are detected by CI rather than by CSS-source inspection alone.
+Meal Planner week controls and planned-meal actions are deliberately compact on narrow screens, while Cooking Mode keeps large readable instructions and sticky Previous/Next controls above the iPhone safe area. Tablet and mobile-landscape layouts receive separate responsive treatment instead of simply inheriting phone or desktop layouts.
+
+FoodHub continues to fit the actual Home Assistant Ingress containing block rather than setting application width from `100vw` or JavaScript Visual Viewport calculations. The rendered Chromium regression test covers representative 320–430 px mobile widths and checks real document `scrollWidth`, horizontal position and element bounding boxes after navigation and modal interactions.
 
 Light and dark modes share the same FoodHub theme variables across the core interface and legacy extension surfaces.
 
@@ -107,7 +109,7 @@ cd dinnerhub
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
-DINNERHUB_DATA_DIR=/tmp/dinnerhub-data uvicorn app.main_v7:app --reload --port 8099
+DINNERHUB_DATA_DIR=/tmp/dinnerhub-data uvicorn app.main:app --reload --port 8099
 ```
 
 Frontend:
