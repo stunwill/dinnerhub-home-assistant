@@ -18,7 +18,7 @@ from .database import DATABASE_PATH, get_db, initialise_database
 from .models import AuditEvent, Ingredient, Meal, MealPlanEntry, RecipeIngredient
 from .schemas import DashboardOutput, MealCreate, MealOutput, MealUpdate, PlanEntryInput, PlanEntryOutput
 
-APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.14.3")
+APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.15.0")
 STATIC_DIR = Path(os.getenv("DINNERHUB_STATIC_DIR", "/app/static"))
 OPTIONS_FILE = Path("/data/options.json")
 DbSession = Annotated[Session, Depends(get_db)]
@@ -619,44 +619,20 @@ def calendar_events(
 ) -> list[dict]:
     return [
         {
+            "uid": f"dinnerhub-meal-{entry['meal_date'].isoformat()}",
             "summary": entry["title"],
             "start": entry["meal_date"].isoformat(),
             "end": (entry["meal_date"] + timedelta(days=1)).isoformat(),
             "all_day": True,
-            "description": f"FoodHub: {entry['entry_type']}",
-            "uid": f"dinnerhub-{entry['id']}@home-assistant",
+            "description": entry["notes"] or "FoodHub planned dinner",
         }
-        for entry in get_meal_plan(db=db, start=start or date.today(), days=days)
+        for entry in get_meal_plan(db=db, start=start, days=days)
     ]
 
 
-@app.get("/api/audit")
-def list_audit_events(db: DbSession, limit: int = Query(default=100, ge=1, le=500)) -> list[dict]:
-    events = db.scalars(select(AuditEvent).order_by(AuditEvent.occurred_at.desc()).limit(limit)).all()
-    return [
-        {
-            "id": event.id,
-            "occurred_at": event.occurred_at,
-            "actor_id": event.actor_id,
-            "actor_name": event.actor_name,
-            "action": event.action,
-            "entity_type": event.entity_type,
-            "entity_id": event.entity_id,
-            "previous_value": event.previous_value,
-            "new_value": event.new_value,
-            "source": event.source,
-            "result": event.result,
-        }
-        for event in events
-    ]
-
-
-@app.get("/{full_path:path}", include_in_schema=False)
-def frontend(full_path: str):  # type: ignore[no-untyped-def]
-    requested = STATIC_DIR / full_path
-    if full_path and requested.is_file() and requested.resolve().is_relative_to(STATIC_DIR.resolve()):
+@app.get("/{path:path}")
+def frontend(path: str = "") -> FileResponse:
+    requested = STATIC_DIR / path
+    if path and requested.is_file():
         return FileResponse(requested)
-    index = STATIC_DIR / "index.html"
-    if index.exists():
-        return FileResponse(index)
-    raise HTTPException(status_code=404, detail="FoodHub frontend has not been built")
+    return FileResponse(STATIC_DIR / "index.html")
