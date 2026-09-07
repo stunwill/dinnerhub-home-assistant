@@ -19,9 +19,9 @@ def app_modules(tmp_path_factory: pytest.TempPathFactory):
 
     # Import the complete application only after the test environment is set.
     # Legacy DINNERHUB_* technical identifiers remain intentionally supported.
-    from app import database, main_v6
+    from app import database, main_v7
 
-    return database, main_v6
+    return database, main_v7
 
 
 @pytest.fixture()
