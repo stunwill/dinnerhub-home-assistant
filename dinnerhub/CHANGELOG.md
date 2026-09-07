@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.15.0
+
+### Added
+
+- Added a persistent weekly Meal Planner with Breakfast, Lunch and Dinner slots.
+- Added recipe-backed and custom meals with edit, move, duplicate and remove actions.
+- Added responsive mobile day cards plus a wider-screen seven-day weekly planner.
+- Added Add to Meal Plan and Start Cooking actions from recipe workflows.
+- Added a dedicated step-by-step Cooking Mode that reuses structured recipe steps, serving scaling, ingredient associations and optional timers.
+- Added active-session cooking progress restoration and a clear Meal complete state.
+
+### Compatibility
+
+- Existing one-dinner-per-date records are preserved and copied safely into the new Dinner slot.
+- Dinner changes in the new planner remain synchronized with the established dinner-plan table used by the FoodHub dashboard, Home Assistant entities, calendar and versioned scheduled-dinner API.
+- The `dinnerhub` add-on slug, repository name, persistent storage paths and existing Home Assistant identifiers remain unchanged.
+
+### Testing
+
+- Added backend Meal Planner coverage for recipe/custom meals, updates, moving, duplication, removal, validation and date-window boundaries.
+- Added CI syntax validation for the new FoodHub 0.15 frontend layer while retaining the existing rendered 320–430 px mobile regression suite.
+
 ## 0.14.3
 
 ### Fixed
@@ -81,79 +103,29 @@
 
 ### Fixed
 
-- Fixed the Add Recipe modal becoming trapped or effectively frozen in the Home Assistant iOS WebView after scrolling, opening the keyboard or returning to the app.
-- Removed nested mobile scrolling by making the full-screen modal backdrop the single vertical scroll container on phones and tablets.
-- Added Visual Viewport tracking so the modal follows the usable iPhone viewport while the software keyboard opens and closes.
-- Added defensive recovery of stale page scroll-lock styles after a modal closes or the Home Assistant app resumes.
-- Prevented iOS input zoom by ensuring recipe form controls use a 16px minimum font size on mobile.
-- Improved file-input sizing so the meal-image control cannot force the recipe modal wider than the phone viewport.
-
-### Added
-
-- Added automatic local draft protection while creating a new recipe.
-- Added an **Unfinished recipe found** recovery prompt when a previously interrupted Add Recipe session exists.
-- Added Restore and Discard actions for recovered drafts.
-- Added automatic restoration of standard recipe fields, categories and ingredient rows.
-- Added a small draft-save status beside the recipe form actions.
-
-### Improved
-
-- Recipe modal headings remain visible while scrolling on mobile.
-- Save and Cancel controls remain reachable through a sticky mobile action bar with iPhone safe-area spacing.
-- Focused fields automatically scroll back into view when the iPhone keyboard obscures them.
-- Draft data is cleared only after a successful recipe form close following submission, while interrupted sessions remain recoverable.
+- Improved Add Recipe modal reliability in Home Assistant iOS WebViews.
+- Added draft recovery for interrupted recipe creation.
 
 ## 0.12.0
 
 ### Added
 
-- Added **Improve with AI** to existing recipe detail views.
-- Added conversational AI refinement for existing recipes using the same structured recipe schema as AI-created recipes.
-- Added quick AI improvement prompts for faster, healthier, cheaper, kid-friendly, simpler and more flavourful recipe variations.
-- Added a side-by-side comparison between the current saved recipe and the proposed AI version.
-- Added a concise change summary covering serving, timing, ingredient, category, cuisine, difficulty and method changes.
-- Added an explicit choice to update the existing recipe or save the AI result as a separate recipe variation.
-- Added iterative follow-up prompts so an AI revision can be refined repeatedly before anything is saved.
-
-### Improved
-
-- Updating an existing recipe keeps its recipe ID, favourites, household scores and meal-plan history attached to the same recipe.
-- Saving an AI result as a variation leaves the original recipe untouched and starts the new recipe without inherited ratings or favourite status.
-- Existing recipe images, source URLs, dietary tags, allergens and substitutions are preserved when AI improvements are applied.
-- AI changes remain review-first and do not modify legacy data until the user explicitly chooses a save action.
-- Added CI syntax validation for the 0.12 frontend extension.
+- Added review-first AI improvements for existing recipes, including iterative refinement and save-as-variation support.
 
 ## 0.11.0
 
 ### Added
 
-- Added **Create recipe with AI** directly inside the Add Recipe modal.
-- Added prompt-based recipe generation for requests such as `I want a recipe for banana bread`.
-- Added starter recipe prompt suggestions for common meal ideas.
-- Added a full on-screen AI recipe preview showing title, timings, servings, categories, ingredients and method before anything is saved.
-- Added conversational recipe refinement so follow-up requests such as `make it less sweet`, `use 3 bananas`, `make it dairy free` or `scale it to 8 serves` regenerate the complete draft while preserving unaffected details.
-- Added structured ingredient links to AI-generated cooking steps so the quantity-aware cooking view continues to work after saving.
-- Added friendly OpenAI credit/quota error handling for prompt-based recipe creation.
-- Added backend tests for the new AI recipe-generation routes.
-
-### Fixed
-
-- Fixed the legacy logo failing to load through Home Assistant Ingress by rendering the branded fork-and-knife logo inline instead of relying on a root-relative image URL.
-
-### Improved
-
-- AI-generated cooking instructions explicitly include ingredient quantities in the method where ingredients are used.
-- AI recipes remain review-first and are only written to the FoodHub library after selecting **Create this recipe**.
+- Added conversational AI recipe creation with structured ingredient and cooking-step output.
 
 ## 0.10.1
 
+### Fixed
+
+- Corrected minor recipe experience issues following the v0.10.0 release.
+
+## 0.10.0
+
 ### Added
 
-- Added `yt-dlp` social-video extraction for Instagram, Facebook and `fb.watch` recipe links.
-- Added optional Netscape-format social cookies support at `/data/dinnerhub/social-cookies.txt` for posts requiring an authenticated session.
-
-### Improved
-
-- Social post URLs are no longer treated as direct MP4 files.
-- FoodHub now returns clearer authentication guidance when Meta blocks anonymous video retrieval.
-- Manual video upload remains available as the reliable fallback.
+- Added the first structured Cooking View and improved recipe instruction authoring.
