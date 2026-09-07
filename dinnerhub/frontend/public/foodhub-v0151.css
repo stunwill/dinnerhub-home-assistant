@@ -1,0 +1,403 @@
+/* FoodHub 0.15.1: mobile-first UX refinement for Home Assistant ingress. */
+
+:root {
+  --fh-mobile-bar: rgba(244, 245, 239, .96);
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: max(12px, env(safe-area-inset-top)) 12px calc(88px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .topbar .eyebrow {
+    margin-bottom: 3px !important;
+    font-size: .65rem !important;
+  }
+
+  .topbar h1 {
+    font-size: clamp(1.65rem, 7vw, 2rem) !important;
+    line-height: 1 !important;
+  }
+
+  .topbar > .primary {
+    width: auto !important;
+    min-height: 44px !important;
+    padding: 9px 14px !important;
+    white-space: nowrap !important;
+  }
+
+  .dh-v010-actions {
+    grid-column: 1 / -1 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #dh-ai-settings-button {
+    grid-column: 1 / -1 !important;
+  }
+
+  .tabs {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 90 !important;
+    margin: 14px -12px -1px !important;
+    padding: 5px max(8px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
+    border-top: 1px solid var(--line) !important;
+    border-bottom: 0 !important;
+    background: var(--fh-mobile-bar) !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, .08) !important;
+  }
+
+  .tabs button {
+    min-height: 48px !important;
+    padding: 7px 4px !important;
+    border-bottom: 0 !important;
+    border-radius: 11px !important;
+    line-height: 1.15 !important;
+  }
+
+  .tabs button.active {
+    background: var(--accent) !important;
+  }
+
+  .feature-card {
+    min-height: 145px !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .feature-card h2 {
+    margin: 6px 0 !important;
+    font-size: clamp(1.45rem, 7vw, 2rem) !important;
+  }
+
+  .section-heading {
+    margin: 24px 0 12px !important;
+    gap: 10px !important;
+  }
+
+  .section-heading h2 {
+    font-size: 1.35rem !important;
+  }
+
+  .day-row,
+  .plan-row {
+    padding: 13px 14px !important;
+    gap: 6px !important;
+    border-radius: 13px !important;
+  }
+
+  .day-row span,
+  .plan-row .status {
+    font-size: .78rem !important;
+  }
+
+  .meal-card {
+    border-radius: 16px !important;
+  }
+
+  .meal-image,
+  .meal-placeholder {
+    height: 138px !important;
+  }
+
+  .meal-card-body {
+    padding: 15px !important;
+  }
+
+  .meal-card h3 {
+    margin: 5px 0 !important;
+    font-size: 1.16rem !important;
+  }
+
+  .meal-card p {
+    min-height: 0 !important;
+    margin-bottom: 10px !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .meal-meta {
+    gap: 5px !important;
+  }
+
+  .meal-meta span,
+  .status,
+  .detail-summary span {
+    padding: 5px 7px !important;
+  }
+
+  .meal-card-actions {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    margin-top: 12px !important;
+  }
+
+  .meal-card-actions button {
+    min-height: 44px !important;
+  }
+
+  .search,
+  .modal input,
+  .modal textarea,
+  .modal select,
+  .fh-v015-form input,
+  .fh-v015-form textarea,
+  .fh-v015-form select {
+    font-size: 16px !important;
+  }
+
+  .modal-backdrop {
+    place-items: stretch !important;
+    padding: 0 !important;
+  }
+
+  .modal,
+  .recipe-detail-modal,
+  .recipe-form-modal,
+  .plan-picker-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+    padding: max(14px, env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom)) !important;
+    overscroll-behavior: contain;
+  }
+
+  .modal-heading {
+    position: sticky !important;
+    top: calc(-1 * max(14px, env(safe-area-inset-top))) !important;
+    z-index: 4 !important;
+    margin: calc(-1 * max(14px, env(safe-area-inset-top))) -14px 16px !important;
+    padding: max(14px, env(safe-area-inset-top)) 14px 10px !important;
+    background: var(--card) !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+
+  .icon-button {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .ingredient-row {
+    padding: 12px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 13px !important;
+    background: rgba(127, 127, 127, .035) !important;
+    gap: 7px !important;
+  }
+
+  .ingredient-row .icon-button {
+    justify-self: stretch !important;
+    width: 100% !important;
+    border-radius: 10px !important;
+  }
+
+  .ingredient-editor-heading > button,
+  .heading-actions > button {
+    width: 100% !important;
+    min-height: 44px !important;
+  }
+
+  .serving-control {
+    margin-bottom: 14px !important;
+  }
+
+  .serving-control button {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .detail-image {
+    max-height: 230px !important;
+    margin-bottom: 13px !important;
+  }
+
+  .recipe-section {
+    margin-top: 19px !important;
+  }
+
+  .ingredient-list li {
+    gap: 10px !important;
+    align-items: flex-start !important;
+  }
+
+  .ingredient-list li span {
+    overflow-wrap: anywhere;
+  }
+
+  .instruction-list {
+    gap: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  .fh-v015-week-nav {
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) 48px !important;
+    gap: 8px !important;
+  }
+
+  .fh-v015-week-nav strong {
+    grid-column: 1 / -1 !important;
+    order: initial !important;
+    text-align: center !important;
+    margin: 0 !important;
+  }
+
+  .fh-v015-week-nav [data-prev],
+  .fh-v015-week-nav [data-next] {
+    overflow: hidden !important;
+    text-indent: -9999px !important;
+    position: relative !important;
+    min-width: 48px !important;
+  }
+
+  .fh-v015-week-nav [data-prev]::after,
+  .fh-v015-week-nav [data-next]::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-indent: 0;
+    font-size: 1.45rem;
+  }
+
+  .fh-v015-week-nav [data-prev]::after { content: '‹'; }
+  .fh-v015-week-nav [data-next]::after { content: '›'; }
+
+  .fh-v015-week-nav [data-today] {
+    grid-column: 2 !important;
+    min-height: 44px !important;
+  }
+
+  .fh-v015-day {
+    padding: 8px !important;
+  }
+
+  .fh-v015-day > header {
+    padding: 7px 3px !important;
+  }
+
+  .fh-v015-slot,
+  .fh-v015-empty-slot {
+    padding: 11px !important;
+  }
+
+  .fh-v015-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .fh-v015-actions .primary {
+    flex: 1 1 100% !important;
+    min-height: 44px !important;
+  }
+
+  .fh-v015-actions .secondary {
+    flex: 1 1 calc(50% - 3px) !important;
+    min-height: 40px !important;
+  }
+
+  .fh-v015-cook-shell {
+    padding: max(12px, env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)) !important;
+    gap: 12px !important;
+  }
+
+  .fh-v015-cook-shell h1 {
+    font-size: clamp(1.5rem, 8vw, 2rem) !important;
+  }
+
+  .fh-v015-step {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .fh-v015-step h2 {
+    font-size: clamp(1.55rem, 7vw, 2rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  .fh-v015-cook-shell > footer {
+    margin: 0 -12px calc(-12px - env(safe-area-inset-bottom)) !important;
+    padding: 22px 12px calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .fh-v015-cook-shell > footer button {
+    min-height: 52px !important;
+  }
+
+  .shopping-item,
+  .dh-shopping-item {
+    min-height: 52px !important;
+  }
+
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    grid-template-columns: 1fr !important;
+  }
+
+  .topbar > .primary {
+    width: 100% !important;
+  }
+
+  .dh-v010-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1024px) {
+  .meal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .fh-v015-cook-shell {
+    max-width: 1100px;
+    grid-template-columns: minmax(220px, .65fr) minmax(0, 1.35fr);
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .fh-v015-cook-shell > header {
+    grid-row: 1 / 3;
+    display: block !important;
+  }
+
+  .fh-v015-progress {
+    grid-column: 2;
+  }
+
+  .fh-v015-step {
+    grid-column: 2;
+    align-self: start;
+  }
+
+  .fh-v015-cook-shell > footer {
+    grid-column: 2;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fh-mobile-bar: rgba(13, 21, 16, .96);
+  }
+}
