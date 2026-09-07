@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.15.1
+
+### Improved
+
+- Added a focused mobile UX refinement layer for iPhone-sized screens and Home Assistant ingress.
+- Reduced mobile header height and visual competition while keeping the primary Add Recipe action easy to reach.
+- Added safe-area-aware sticky mobile navigation and stronger active-state feedback.
+- Reduced vertical density on Home, recipe cards and planning rows.
+- Improved mobile recipe detail, serving controls and ingredient editing for touch use.
+- Converted core mobile modals into full-height task views with sticky headings and 16 px form inputs to avoid iOS input zoom.
+- Refined Meal Planner week navigation, planned-meal actions and Cooking Mode controls for one-handed use.
+- Added tablet and mobile-landscape responsive refinements.
+
+### Compatibility
+
+- The `dinnerhub` add-on slug, repository name, environment variables, persistent storage paths and existing Home Assistant identifiers remain unchanged.
+- No recipe, Meal Planner, Cooking Mode or Shopping data migration is required.
+- The 0.14.3 container-relative width strategy remains authoritative, without reintroducing JavaScript Visual Viewport sizing.
+
+### Testing
+
+- Existing rendered mobile overflow coverage remains active across 320, 360, 375, 390, 393, 414 and 430 px viewport widths.
+- New mobile layout rules use responsive, container-relative sizing and iPhone safe-area insets.
+
 ## 0.15.0
 
 ### Added
@@ -42,90 +66,3 @@
 
 - The `dinnerhub` add-on slug, repository name, persistent storage paths and existing Home Assistant identifiers remain unchanged.
 - This corrective release does not migrate or modify recipe, planning, rating or shopping data.
-
-## 0.14.2
-
-### Fixed
-
-- Released the follow-up iPhone/Home Assistant Ingress width correction as an installable Home Assistant patch version.
-- Constrained FoodHub to the actual usable visual viewport width so the document cannot remain wider than the visible iPhone WebView.
-- Reflowed the mobile header so Add Recipe and Import Recipe fit in two columns with AI Settings on a full-width row underneath.
-- Re-constrained primary navigation, Home cards, Meal Plan, Guided Planning, Shopping, forms and modals after legacy extension injection.
-- Added runtime width re-evaluation for resize, orientation and Visual Viewport changes, including stale horizontal-offset recovery.
-
-### Compatibility
-
-- The `dinnerhub` add-on slug, repository name, persistent storage paths and existing Home Assistant identifiers remain unchanged.
-- This patch does not migrate or modify recipe, planning, rating or shopping data.
-
-## 0.14.1
-
-### Fixed
-
-- Fixed document-level horizontal scrolling on mobile by removing legacy `100vw` shell constraints and constraining FoodHub layouts to the actual Home Assistant Ingress container width.
-- Reflowed the mobile header, FoodHub branding, primary actions and navigation so controls remain visible without side-to-side page dragging.
-- Constrained Home dashboard cards, Guided Planning, meal planning, AI dialogs and legacy extension surfaces to the available viewport width.
-- Fixed Guided Planning and AI import surfaces using hard-coded light styling while FoodHub is in dark mode.
-- Updated remaining user-facing legacy DinnerHub text in AI import/settings and legacy enhancement UI to FoodHub while retaining technical compatibility identifiers.
-
-### Improved
-
-- Added a dedicated corrective responsive/theme layer for narrow Home Assistant WebViews, including 320–430 px mobile widths.
-- Improved mobile planning-length controls, modal sizing and AI source tabs so they reflow instead of increasing document width.
-- Reused FoodHub theme variables across legacy planning and AI extension surfaces for consistent dark/light presentation.
-
-### Compatibility
-
-- The `dinnerhub` add-on slug, repository name, persistent storage paths and existing Home Assistant identifiers remain unchanged.
-- This corrective release does not migrate or modify recipe, planning, rating or shopping data.
-
-## 0.14.0
-
-### Added
-
-- Added authoritative per-serving recipe nutrition storage with calories, protein, carbohydrate, fat, saturated fat, sugar, fibre and sodium.
-- Added versioned FoodHub capability, recipe nutrition and scheduled-dinner API support for HealthHub integration.
-- Added a recipe nutrition editor in the FoodHub interface.
-- Added the FoodHub / HealthHub v1 integration contract documentation.
-
-### Changed
-
-- Completed user-facing branding from DinnerHub to FoodHub while retaining the legacy `dinnerhub` add-on slug, repository name, storage path and existing Home Assistant identifiers for compatibility.
-- Updated API, ingress and Home Assistant-facing branding to use FoodHub.
-
-### Compatibility
-
-- Existing data remains under `/data/dinnerhub/dinnerhub.db`.
-- Existing `sensor.dinnerhub_*` entity identifiers and calendar UID prefixes remain unchanged.
-- The GitHub repository remains `stunwill/dinnerhub-home-assistant`.
-
-## 0.13.0
-
-### Fixed
-
-- Improved Add Recipe modal reliability in Home Assistant iOS WebViews.
-- Added draft recovery for interrupted recipe creation.
-
-## 0.12.0
-
-### Added
-
-- Added review-first AI improvements for existing recipes, including iterative refinement and save-as-variation support.
-
-## 0.11.0
-
-### Added
-
-- Added conversational AI recipe creation with structured ingredient and cooking-step output.
-
-## 0.10.1
-
-### Fixed
-
-- Corrected minor recipe experience issues following the v0.10.0 release.
-
-## 0.10.0
-
-### Added
-
-- Added the first structured Cooking View and improved recipe instruction authoring.
