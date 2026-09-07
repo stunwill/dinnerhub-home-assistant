@@ -2,6 +2,28 @@
 
 This root changelog is the canonical DevHub-discoverable release history for FoodHub. The Home Assistant-facing changelog remains at `dinnerhub/CHANGELOG.md`.
 
+## 0.15.1
+
+### Improved
+- Added a focused mobile UX layer for iPhone-sized screens and Home Assistant ingress without changing FoodHub's core data model or backend contracts.
+- Reduced mobile header height and visual competition while keeping Add Recipe immediately reachable.
+- Converted primary mobile navigation into a safe-area-aware sticky navigation bar with stronger active-state feedback.
+- Reduced vertical density on Home, recipe cards and planning rows so important content appears earlier.
+- Optimised recipe cards, recipe detail, serving controls and ingredient editing for touch use.
+- Converted core mobile modals into full-height task surfaces with sticky headings and 16 px form controls to avoid iOS input zoom.
+- Refined the 0.15 Meal Planner week navigation, planned-meal actions and Cooking Mode controls for one-handed mobile use.
+- Added iPhone safe-area handling to mobile navigation, full-screen tasks and Cooking Mode controls.
+- Added tablet and mobile-landscape responsive refinements without changing desktop behaviour.
+
+### Compatibility
+- Preserves the existing `dinnerhub` repository name, add-on slug, environment variables, persistent storage paths and Home Assistant identifiers.
+- Does not migrate or rewrite recipe, Meal Planner, Cooking Mode or Shopping data.
+- Keeps the 0.14.3 containing-block width strategy and does not restore JavaScript Visual Viewport width calculations.
+
+### Testing
+- Retains the rendered Chromium mobile overflow suite across 320, 360, 375, 390, 393, 414 and 430 px widths.
+- New styling is deliberately container-relative and avoids new fixed desktop widths or document-level horizontal scrolling dependencies.
+
 ## 0.15.0
 
 ### Added
@@ -99,30 +121,8 @@ This root changelog is the canonical DevHub-discoverable release history for Foo
 
 ## 0.10.1
 
-### Fixed
-- Corrected minor recipe experience issues following the v0.10.0 release.
+Earlier release details remain preserved in `dinnerhub/CHANGELOG.md` and repository history.
 
-## 0.10.0
+## Release publication note
 
-### Added
-- Added the first structured Cooking View and improved recipe instruction authoring.
-
-## 0.9.0
-
-### Added
-- Added AI-assisted recipe extraction and review workflows.
-
-## 0.8.0
-
-### Added
-- Added improved meal planning and recipe management workflows.
-
-## 0.7.0
-
-### Added
-- Added recipe and meal-management enhancements.
-
-## 0.6.0
-
-### Added
-- Added broader meal planning and interface improvements.
+The repository currently has no published GitHub Releases. Version `0.15.1` is established by the Home Assistant app metadata on this release branch. Future published tags/releases should use the same semantic version as the application metadata.
