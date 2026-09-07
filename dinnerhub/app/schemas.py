@@ -122,6 +122,7 @@ class PlanEntryInput(BaseModel):
     meal_id: int | None = None
     entry_type: Literal["meal", "takeaway", "leftovers", "eating_out", "no_meal"] = "meal"
     custom_title: str | None = Field(default=None, max_length=180)
+    status: Literal["planned", "completed", "skipped"] = "planned"
     servings: float | None = Field(default=None, gt=0, le=100)
     locked: bool = False
     notes: str | None = None

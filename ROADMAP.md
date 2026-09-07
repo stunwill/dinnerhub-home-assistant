@@ -2,9 +2,33 @@
 
 FoodHub is the current user-facing product name. The repository, Home Assistant slug, storage path and existing integration identifiers retain the legacy `dinnerhub` name for compatibility.
 
-## v0.15.0 - Meal Planner & Cooking Mode
+## v0.15.1 - Mobile UX Optimisation
 
 Status: In development
+
+### Mobile UX
+- [x] Reduce mobile header height and competing primary actions.
+- [x] Add safe-area-aware sticky mobile navigation.
+- [x] Reduce Home, recipe-card and planning-row vertical density.
+- [x] Improve mobile recipe detail, serving controls and ingredient editing.
+- [x] Convert core mobile dialogs to full-height task surfaces with sticky headings.
+- [x] Refine Meal Planner week controls and planned-meal actions for narrow screens.
+- [x] Refine Cooking Mode for one-handed use and iPhone safe areas.
+- [x] Add tablet and mobile-landscape responsive refinements.
+
+### Compatibility
+- [x] Keep the container-relative responsive strategy introduced by the 0.14.x corrective releases.
+- [x] Do not restore JavaScript Visual Viewport width calculations.
+- [x] Preserve legacy repository, add-on, storage and Home Assistant technical identifiers.
+- [x] Do not migrate recipe, planner, cooking or shopping data.
+
+### Testing
+- [x] Preserve rendered 320–430 px mobile overflow regression coverage.
+- [ ] Verify full CI on the release Pull Request.
+
+## v0.15.0 - Meal Planner & Cooking Mode
+
+Status: Released
 
 ### Features
 - [x] Add persistent Breakfast, Lunch and Dinner planning slots.
@@ -45,7 +69,7 @@ Status: Released
 ### Testing
 - [x] Validate backend behaviour, frontend build, Home Assistant metadata and container build in CI.
 
-## Next Release - Recipe Capture & Import Improvements
+## Next Feature Release - Recipe Capture & Import Improvements
 
 Status: Planned
 
