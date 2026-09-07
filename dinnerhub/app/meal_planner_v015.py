@@ -21,7 +21,7 @@ def utc_now() -> datetime:
 
 
 class PlannedMeal(Base):
-    __tablename__ = "planned_meals_v015"
+    __tablename__ = "planned_meals"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     meal_date: Mapped[date] = mapped_column(Date, index=True)
@@ -119,24 +119,55 @@ def _payload(db: Session, row: PlannedMeal) -> dict:
     }
 
 
+def _delete_legacy_dinner(db: Session, meal_date: date) -> None:
+    legacy = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == meal_date))
+    if legacy:
+        db.delete(legacy)
+
+
+def _sync_legacy_dinner(db: Session, row: PlannedMeal) -> None:
+    """Keep the established dinner-only contracts in sync with the new planner."""
+    if row.meal_type != "dinner":
+        return
+    legacy = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == row.meal_date))
+    if legacy is None:
+        legacy = MealPlanEntry(meal_date=row.meal_date)
+        db.add(legacy)
+    legacy.meal_id = row.meal_id
+    legacy.entry_type = "meal" if row.meal_id is not None else "custom"
+    legacy.custom_title = row.custom_title
+    legacy.status = "planned"
+    legacy.servings = row.servings
+    legacy.selected_by_id = "foodhub-meal-planner"
+    legacy.selected_by_name = "FoodHub"
+    legacy.locked = False
+    legacy.notes = row.notes
+
+
 def migrate_legacy_dinner_plans() -> None:
-    """Copy legacy one-dinner-per-date rows into v0.15 slots without deleting them."""
+    """Copy legacy one-dinner-per-date rows into dinner slots without deleting them."""
     Base.metadata.create_all(bind=engine, tables=[PlannedMeal.__table__])
+    if not str(engine.url).startswith("sqlite"):
+        return
+    legacy_titles = {
+        "takeaway": "Takeaway",
+        "leftovers": "Leftovers",
+        "eating_out": "Eating out",
+        "no_meal": "No meal required",
+    }
     with engine.begin() as connection:
         table_names = {item[0] for item in connection.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))}
         if "meal_plan_entries" not in table_names:
             return
         rows = connection.execute(
             text(
-                "SELECT meal_date, meal_id, custom_title, servings, notes, created_at, updated_at "
+                "SELECT meal_date, meal_id, entry_type, custom_title, servings, notes, created_at, updated_at "
                 "FROM meal_plan_entries"
             )
         ).mappings()
         for item in rows:
             exists = connection.execute(
-                text(
-                    "SELECT 1 FROM planned_meals_v015 WHERE meal_date=:meal_date AND meal_type='dinner' LIMIT 1"
-                ),
+                text("SELECT 1 FROM planned_meals WHERE meal_date=:meal_date AND meal_type='dinner' LIMIT 1"),
                 {"meal_date": item["meal_date"]},
             ).first()
             if exists:
@@ -144,10 +175,10 @@ def migrate_legacy_dinner_plans() -> None:
             custom_title = item["custom_title"]
             meal_id = item["meal_id"]
             if meal_id is None and not custom_title:
-                custom_title = "Dinner"
+                custom_title = legacy_titles.get(item["entry_type"], "Dinner")
             connection.execute(
                 text(
-                    "INSERT INTO planned_meals_v015 "
+                    "INSERT INTO planned_meals "
                     "(meal_date, meal_type, meal_id, custom_title, servings, notes, created_at, updated_at) "
                     "VALUES (:meal_date, 'dinner', :meal_id, :custom_title, :servings, :notes, :created_at, :updated_at)"
                 ),
@@ -200,6 +231,8 @@ def create_planned_meal(payload: PlannedMealInput, db: DbSession) -> dict:
         notes=payload.notes,
     )
     db.add(row)
+    db.flush()
+    _sync_legacy_dinner(db, row)
     db.commit()
     db.refresh(row)
     return _payload(db, row)
@@ -208,6 +241,8 @@ def create_planned_meal(payload: PlannedMealInput, db: DbSession) -> dict:
 @router.patch("/meal-planner/{planned_id}")
 def update_planned_meal(planned_id: int, payload: PlannedMealPatch, db: DbSession) -> dict:
     row = _row(db, planned_id)
+    old_date = row.meal_date
+    old_type = row.meal_type
     data = payload.model_dump(exclude_unset=True)
     target_date = data.get("meal_date", row.meal_date)
     target_type = data.get("meal_type", row.meal_type)
@@ -230,6 +265,8 @@ def update_planned_meal(planned_id: int, payload: PlannedMealPatch, db: DbSessio
     meal = _meal(db, meal_id)
     _validate_choice(meal, custom_title)
 
+    if old_type == "dinner" and (target_type != "dinner" or target_date != old_date):
+        _delete_legacy_dinner(db, old_date)
     row.meal_date = target_date
     row.meal_type = target_type
     row.meal_id = meal.id if meal else None
@@ -237,6 +274,8 @@ def update_planned_meal(planned_id: int, payload: PlannedMealPatch, db: DbSessio
     row.servings = data.get("servings", row.servings) or (meal.servings if meal else row.servings)
     row.notes = data.get("notes", row.notes)
     row.updated_at = utc_now()
+    db.flush()
+    _sync_legacy_dinner(db, row)
     db.commit()
     db.refresh(row)
     return _payload(db, row)
@@ -262,6 +301,8 @@ def duplicate_planned_meal(planned_id: int, payload: DuplicateInput, db: DbSessi
         notes=source.notes,
     )
     db.add(row)
+    db.flush()
+    _sync_legacy_dinner(db, row)
     db.commit()
     db.refresh(row)
     return _payload(db, row)
@@ -270,6 +311,8 @@ def duplicate_planned_meal(planned_id: int, payload: DuplicateInput, db: DbSessi
 @router.delete("/meal-planner/{planned_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_planned_meal(planned_id: int, db: DbSession) -> Response:
     row = _row(db, planned_id)
+    if row.meal_type == "dinner":
+        _delete_legacy_dinner(db, row.meal_date)
     db.delete(row)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
