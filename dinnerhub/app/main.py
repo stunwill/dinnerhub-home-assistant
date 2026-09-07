@@ -18,7 +18,7 @@ from .database import DATABASE_PATH, get_db, initialise_database
 from .models import AuditEvent, Ingredient, Meal, MealPlanEntry, RecipeIngredient
 from .schemas import DashboardOutput, MealCreate, MealOutput, MealUpdate, PlanEntryInput, PlanEntryOutput
 
-APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.15.0")
+APP_VERSION = os.getenv("DINNERHUB_VERSION", "0.15.1")
 STATIC_DIR = Path(os.getenv("DINNERHUB_STATIC_DIR", "/app/static"))
 OPTIONS_FILE = Path("/data/options.json")
 DbSession = Annotated[Session, Depends(get_db)]
@@ -435,19 +435,19 @@ def get_meal_plan(
     start: date | None = Query(default=None),
     days: int = Query(default=7, ge=1, le=31),
 ) -> list[dict]:
-    start_date = start or date.today()
-    end_date = start_date + timedelta(days=days - 1)
-    statement = (
+    first_day = start or date.today()
+    last_day = first_day + timedelta(days=days - 1)
+    entries = db.scalars(
         select(MealPlanEntry)
         .options(selectinload(MealPlanEntry.meal).selectinload(Meal.ingredients).selectinload(RecipeIngredient.ingredient))
-        .where(MealPlanEntry.meal_date.between(start_date, end_date))
+        .where(MealPlanEntry.meal_date >= first_day, MealPlanEntry.meal_date <= last_day)
         .order_by(MealPlanEntry.meal_date)
-    )
-    return [plan_to_dict(entry) for entry in db.scalars(statement).unique().all()]
+    ).unique().all()
+    return [plan_to_dict(entry) for entry in entries]
 
 
 @app.put("/api/meal-plan/{meal_date}", response_model=PlanEntryOutput)
-def upsert_plan_entry(
+def set_meal_plan_entry(
     meal_date: date,
     payload: PlanEntryInput,
     db: DbSession,
@@ -456,42 +456,40 @@ def upsert_plan_entry(
     x_remote_user_display_name: str | None = Header(default=None),
 ) -> dict:
     actor_id, actor_name = actor(x_remote_user_id, x_remote_user_name, x_remote_user_display_name)
-    if payload.entry_type == "meal" and payload.meal_id is None:
-        raise HTTPException(status_code=422, detail="meal_id is required when entry_type is meal")
-    meal = get_meal_or_404(db, payload.meal_id) if payload.meal_id else None
     existing = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == meal_date))
-    previous_meal_id = existing.meal_id if existing else None
-    previous = (
-        {
-            "date": existing.meal_date.isoformat(),
-            "meal_id": existing.meal_id,
-            "entry_type": existing.entry_type,
-            "status": existing.status,
-        }
-        if existing
-        else None
-    )
-    entry = existing or MealPlanEntry(meal_date=meal_date)
-    entry.meal = meal
-    entry.entry_type = payload.entry_type
-    entry.custom_title = payload.custom_title
-    entry.servings = payload.servings or (meal.servings if meal else None)
-    entry.selected_by_id = actor_id
-    entry.selected_by_name = actor_name
-    entry.locked = payload.locked
-    entry.notes = payload.notes
+    previous = plan_to_dict(existing) if existing else None
+    if payload.entry_type == "meal" and payload.meal_id is None:
+        raise HTTPException(status_code=422, detail="meal_id is required for meal entries")
+    if payload.entry_type != "meal" and payload.meal_id is not None:
+        raise HTTPException(status_code=422, detail="meal_id is only valid for meal entries")
+    meal = get_meal_or_404(db, payload.meal_id) if payload.meal_id is not None else None
     if not existing:
-        db.add(entry)
-    if meal and previous_meal_id != meal.id:
-        meal.selection_count += 1
-    db.flush()
+        existing = MealPlanEntry(meal_date=meal_date)
+        db.add(existing)
+    existing.meal = meal
+    existing.entry_type = payload.entry_type
+    existing.status = payload.status
+    existing.servings = payload.servings or (meal.servings if meal else None)
+    existing.selected_by_id = actor_id
+    existing.selected_by_name = actor_name
+    existing.locked = payload.locked
+    existing.notes = payload.notes
+    if payload.entry_type == "meal":
+        existing.custom_title = None
+    else:
+        existing.custom_title = {
+            "takeaway": "Takeaway",
+            "leftovers": "Leftovers",
+            "eating_out": "Eating out",
+            "no_meal": "No meal required",
+        }.get(payload.entry_type)
     record_audit(
         db,
         actor_id=actor_id,
         actor_name=actor_name,
-        action="meal_assigned" if not existing else "meal_replaced",
-        entity_type="meal_plan_entry",
-        entity_id=entry.id,
+        action="meal_plan_changed",
+        entity_type="meal_plan",
+        entity_id=meal_date.isoformat(),
         previous_value=previous,
         new_value={"date": meal_date.isoformat(), "meal_id": payload.meal_id, "entry_type": payload.entry_type},
     )
@@ -499,140 +497,115 @@ def upsert_plan_entry(
     refreshed = db.scalar(
         select(MealPlanEntry)
         .options(selectinload(MealPlanEntry.meal).selectinload(Meal.ingredients).selectinload(RecipeIngredient.ingredient))
-        .where(MealPlanEntry.id == entry.id)
+        .where(MealPlanEntry.meal_date == meal_date)
     )
-    if not refreshed:
-        raise HTTPException(status_code=500, detail="Meal plan entry could not be reloaded")
     return plan_to_dict(refreshed)
 
 
 @app.delete("/api/meal-plan/{meal_date}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_plan_entry(meal_date: date, db: DbSession) -> Response:
-    entry = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == meal_date))
-    if not entry:
-        raise HTTPException(status_code=404, detail="No planned dinner exists for this date")
-    record_audit(
-        db,
-        actor_id="local-user",
-        actor_name="FoodHub user",
-        action="meal_removed",
-        entity_type="meal_plan_entry",
-        entity_id=entry.id,
-        previous_value={"date": meal_date.isoformat(), "meal_id": entry.meal_id, "entry_type": entry.entry_type},
-    )
-    db.delete(entry)
+def delete_meal_plan_entry(meal_date: date, db: DbSession) -> Response:
+    existing = db.scalar(select(MealPlanEntry).where(MealPlanEntry.meal_date == meal_date))
+    if not existing:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    db.delete(existing)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.post("/api/meal-plan/{meal_date}/complete", response_model=PlanEntryOutput)
-def complete_plan_entry(meal_date: date, db: DbSession) -> dict:
-    entry = db.scalar(
+@app.get("/api/dashboard", response_model=DashboardOutput)
+def dashboard(db: DbSession, days: int = Query(default=7, ge=1, le=31)) -> dict:
+    today = date.today()
+    entries = db.scalars(
         select(MealPlanEntry)
         .options(selectinload(MealPlanEntry.meal).selectinload(Meal.ingredients).selectinload(RecipeIngredient.ingredient))
-        .where(MealPlanEntry.meal_date == meal_date)
-    )
-    if not entry:
-        raise HTTPException(status_code=404, detail="No planned dinner exists for this date")
-    entry.status = "completed"
-    if entry.meal:
-        entry.meal.last_prepared_at = meal_date
-    record_audit(
-        db,
-        actor_id="local-user",
-        actor_name="FoodHub user",
-        action="meal_marked_completed",
-        entity_type="meal_plan_entry",
-        entity_id=entry.id,
-        new_value={"status": "completed"},
-    )
-    db.commit()
-    return plan_to_dict(entry)
-
-
-@app.get("/api/dashboard", response_model=DashboardOutput)
-def dashboard(db: DbSession, days: int = Query(default=7, ge=1, le=14)) -> dict:
-    today = date.today()
-    entries = get_meal_plan(db=db, start=today, days=days)
-    by_date = {entry["meal_date"]: entry for entry in entries}
-    active_meals = db.scalar(select(func.count(Meal.id)).where(Meal.active.is_(True))) or 0
+        .where(MealPlanEntry.meal_date >= today, MealPlanEntry.meal_date < today + timedelta(days=days))
+        .order_by(MealPlanEntry.meal_date)
+    ).unique().all()
+    by_date = {entry.meal_date: entry for entry in entries}
     return {
         "version": APP_VERSION,
-        "today": by_date.get(today),
-        "tomorrow": by_date.get(today + timedelta(days=1)),
-        "upcoming": entries,
+        "today": plan_to_dict(by_date[today]) if today in by_date else None,
+        "tomorrow": plan_to_dict(by_date[today + timedelta(days=1)]) if today + timedelta(days=1) in by_date else None,
+        "upcoming": [plan_to_dict(entry) for entry in entries],
         "unplanned_days": sum(1 for offset in range(days) if today + timedelta(days=offset) not in by_date),
-        "active_meals": active_meals,
+        "active_meals": db.scalar(select(func.count(Meal.id)).where(Meal.active.is_(True))) or 0,
+    }
+
+
+@app.get("/api/calendar")
+def calendar_feed(db: DbSession, days: int = Query(default=30, ge=1, le=90)) -> dict:
+    start_day = date.today()
+    end_day = start_day + timedelta(days=days)
+    entries = db.scalars(
+        select(MealPlanEntry)
+        .options(selectinload(MealPlanEntry.meal))
+        .where(MealPlanEntry.meal_date >= start_day, MealPlanEntry.meal_date < end_day)
+        .order_by(MealPlanEntry.meal_date)
+    ).all()
+    return {
+        "events": [
+            {
+                "uid": f"dinnerhub-{entry.meal_date.isoformat()}",
+                "summary": entry.meal.name if entry.meal else entry.custom_title,
+                "date": entry.meal_date,
+                "description": entry.notes or "FoodHub meal plan",
+            }
+            for entry in entries
+        ]
     }
 
 
 @app.get("/api/home-assistant/states")
 def home_assistant_states(db: DbSession) -> dict:
     today = date.today()
-    entries = get_meal_plan(db=db, start=today, days=14)
-    by_date = {entry["meal_date"]: entry for entry in entries}
+    entries = db.scalars(
+        select(MealPlanEntry)
+        .options(selectinload(MealPlanEntry.meal))
+        .where(MealPlanEntry.meal_date >= today, MealPlanEntry.meal_date <= today + timedelta(days=1))
+    ).all()
+    by_date = {entry.meal_date: entry for entry in entries}
 
-    def sensor_payload(target: date) -> dict:
-        entry = by_date.get(target)
-        if not entry:
-            return {"state": "Unplanned", "attributes": {"date": target.isoformat(), "planned": False}}
-        meal = entry.get("meal")
-        return {
-            "state": entry["title"],
-            "attributes": {
-                "date": target.isoformat(),
-                "planned": True,
-                "recipe_id": entry["meal_id"],
-                "entry_type": entry["entry_type"],
-                "status": entry["status"],
-                "selected_by": entry["selected_by_name"],
-                "protein": meal["main_protein"] if meal else None,
-                "category": meal["category"] if meal else None,
-                "preparation_time": meal["prep_minutes"] if meal else None,
-                "cooking_time": meal["cook_minutes"] if meal else None,
-                "total_time": meal["total_minutes"] if meal else None,
-                "servings": entry["servings"],
-                "image_url": meal["image_url"] if meal else None,
-            },
-        }
+    def title(day: date) -> str:
+        entry = by_date.get(day)
+        return entry.meal.name if entry and entry.meal else entry.custom_title if entry else "Unplanned"
 
-    next_entry = next((entry for entry in entries if entry["meal_date"] >= today), None)
     return {
-        "sensor.dinnerhub_dinner_today": sensor_payload(today),
-        "sensor.dinnerhub_dinner_tomorrow": sensor_payload(today + timedelta(days=1)),
-        "sensor.dinnerhub_next_planned_dinner": {
-            "state": next_entry["title"] if next_entry else "Unplanned",
-            "attributes": {"date": next_entry["meal_date"].isoformat() if next_entry else None},
-        },
-        "sensor.dinnerhub_meal_plan_status": {
-            "state": "complete" if len(entries) >= 7 else "incomplete",
-            "attributes": {"planned_days": len(entries), "days_checked": 14},
+        "sensor.dinnerhub_tonight": {"state": title(today), "attributes": {"friendly_name": "FoodHub Tonight"}},
+        "sensor.dinnerhub_tomorrow": {
+            "state": title(today + timedelta(days=1)),
+            "attributes": {"friendly_name": "FoodHub Tomorrow"},
         },
     }
 
 
-@app.get("/api/calendar")
-def calendar_events(
-    db: DbSession,
-    start: date | None = Query(default=None),
-    days: int = Query(default=14, ge=1, le=90),
-) -> list[dict]:
+@app.get("/api/audit")
+def audit_log(db: DbSession, limit: int = Query(default=100, ge=1, le=500)) -> list[dict]:
+    rows = db.scalars(select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(limit)).all()
     return [
         {
-            "uid": f"dinnerhub-meal-{entry['meal_date'].isoformat()}",
-            "summary": entry["title"],
-            "start": entry["meal_date"].isoformat(),
-            "end": (entry["meal_date"] + timedelta(days=1)).isoformat(),
-            "all_day": True,
-            "description": entry["notes"] or "FoodHub planned dinner",
+            "id": row.id,
+            "actor_id": row.actor_id,
+            "actor_name": row.actor_name,
+            "action": row.action,
+            "entity_type": row.entity_type,
+            "entity_id": row.entity_id,
+            "previous_value": row.previous_value,
+            "new_value": row.new_value,
+            "source": row.source,
+            "created_at": row.created_at,
         }
-        for entry in get_meal_plan(db=db, start=start, days=days)
+        for row in rows
     ]
 
 
 @app.get("/{path:path}")
-def frontend(path: str = "") -> FileResponse:
-    requested = STATIC_DIR / path
-    if path and requested.is_file():
-        return FileResponse(requested)
-    return FileResponse(STATIC_DIR / "index.html")
+def frontend(path: str):  # type: ignore[no-untyped-def]
+    if path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    candidate = STATIC_DIR / path
+    if path and candidate.exists() and candidate.is_file():
+        return FileResponse(candidate)
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return {"message": "FoodHub frontend has not been built yet"}
