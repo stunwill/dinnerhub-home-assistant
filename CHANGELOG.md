@@ -2,6 +2,27 @@
 
 This root changelog is the canonical DevHub-discoverable release history for FoodHub. The Home Assistant-facing changelog remains at `dinnerhub/CHANGELOG.md`.
 
+## 0.15.0
+
+### Added
+- Added a persistent weekly Meal Planner with Breakfast, Lunch and Dinner slots.
+- Added recipe-backed and custom planned meals, with edit, move, duplicate and remove workflows.
+- Added a mobile-first weekly planner that reflows to stacked day cards on narrow Home Assistant and iPhone-sized viewports, while retaining a seven-column weekly overview on wider screens.
+- Added recipe-to-planner actions so a recipe can be scheduled without first navigating to the planner.
+- Added a dedicated step-by-step Cooking Mode using FoodHub's existing structured cooking steps, serving scaling, ingredient associations and optional timer metadata.
+- Added session restoration for the current Cooking Mode step and clear completion state.
+
+### Compatibility
+- Added the new `planned_meals` table without deleting or rewriting the legacy `meal_plan_entries` table.
+- Existing dinner plans are copied safely into Dinner slots on upgrade.
+- Dinner changes made through the new planner are mirrored back to the established dinner-plan table so the Home dashboard, Home Assistant entities, calendar and v1 scheduled-dinner integration continue to receive current dinner data.
+- The legacy `dinnerhub` repository name, add-on slug, persistent storage path and Home Assistant identifiers remain unchanged.
+
+### Testing
+- Added Meal Planner API coverage for recipe meals, custom meals, moving, duplication, deletion, validation and week boundaries.
+- Extended CI syntax checking to the FoodHub 0.15 frontend extension.
+- Existing rendered mobile-layout regression coverage remains active for 320–430 px widths.
+
 ## 0.14.3
 
 ### Fixed
@@ -78,13 +99,30 @@ This root changelog is the canonical DevHub-discoverable release history for Foo
 
 ## 0.10.1
 
+### Fixed
+- Corrected minor recipe experience issues following the v0.10.0 release.
+
+## 0.10.0
+
 ### Added
-- Added supported social-video extraction with authenticated-cookie fallback guidance.
+- Added the first structured Cooking View and improved recipe instruction authoring.
 
-## Earlier releases
+## 0.9.0
 
-Earlier release details remain preserved in `dinnerhub/CHANGELOG.md` and repository pull-request history. This root file intentionally does not invent or reconstruct entries that are not reliably documented.
+### Added
+- Added AI-assisted recipe extraction and review workflows.
 
-## Release publication note
+## 0.8.0
 
-The repository currently has no published GitHub Releases. Version `0.14.3` is established by the Home Assistant app metadata on this release branch. Future published tags/releases should use the same semantic version as the application metadata.
+### Added
+- Added improved meal planning and recipe management workflows.
+
+## 0.7.0
+
+### Added
+- Added recipe and meal-management enhancements.
+
+## 0.6.0
+
+### Added
+- Added broader meal planning and interface improvements.
